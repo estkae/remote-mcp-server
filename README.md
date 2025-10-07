@@ -7,12 +7,12 @@ This is a template for creating **remote MCP servers** that can be deployed to D
 This template demonstrates a domain availability checker that uses WHOIS lookups and DNS resolution. Built with the modern FastMCP framework for reliable domain availability checking.
 
 ## Deploy this Remote MCP Server to DigitalOcean
-[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/do-community/do-remote-mcp-server-template/tree/main)
+[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/estkae/remote-mcp-server/tree/main)
 
 ## Quick Start (1-Click Deploy)
 
 1. **Deploy to DigitalOcean** using the button above
-2. **Get your deployed URL** from DigitalOcean (e.g., `https://your-app.ondigitalocean.app`)
+2. **Get your deployed URL** from DigitalOcean (e.g., `https://remote-mcp-server-xxx.ondigitalocean.app`)
 3. **Add to your MCP client** using the URL + `/mcp` endpoint
 
 ![Image](https://github.com/user-attachments/assets/d5e7db9e-346d-436b-9c2f-53f014debe17)
@@ -34,14 +34,14 @@ After deploying to DigitalOcean, add your server URL to your MCP client:
 {
   "mcpServers": {
     "domain-checker": {
-      "url": "https://YOUR-APP-NAME.ondigitalocean.app/mcp",
+      "url": "https://remote-mcp-server-xxx.ondigitalocean.app/mcp",
       "description": "Check domain availability"
     }
   }
 }
 ```
 
-Replace `YOUR-APP-NAME` with your actual DigitalOcean app name.
+Replace `remote-mcp-server-xxx` with your actual DigitalOcean app URL (with the generated suffix).
 
 ![Image](https://github.com/user-attachments/assets/34b5228e-2bb8-4fb4-9326-248a62f9519a)
 
@@ -105,8 +105,8 @@ Add the following configuration to the appropriate file, making sure to point to
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/ajot/domain-checker-mcp-server.git
-   cd domain-checker-mcp-server
+   git clone https://github.com/estkae/remote-mcp-server.git
+   cd remote-mcp-server
    ```
 
 2. **Create and activate a virtual environment (recommended)**
@@ -161,7 +161,7 @@ This MCP server can be deployed as a remote MCP server on DigitalOcean App Platf
    {
      "mcpServers": {
        "domain-checker": {
-         "url": "https://your-app-name.ondigitalocean.app/mcp",
+         "url": "https://remote-mcp-server-xxx.ondigitalocean.app/mcp",
          "description": "Check domain name availability"
        }
      }

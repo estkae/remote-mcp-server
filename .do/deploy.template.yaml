@@ -1,12 +1,12 @@
 spec:
-  name: do-remote-mcp-server-template
-  region: nyc
+  name: remote-mcp-server
+  region: FRA1
   services:
-    - name: do-remote-mcp-server-template
+    - name: remote-mcp-server
       environment_slug: python
       git:
         branch: main
-        repo_clone_url: https://github.com/do-community/do-remote-mcp-server-template
+        repo_clone_url: https://github.com/estkae/remote-mcp-server
       build_command: pip install -r requirements.txt
       run_command: python domain-checker.py
       http_port: 8080
