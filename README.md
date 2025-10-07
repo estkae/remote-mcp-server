@@ -12,7 +12,7 @@ This template demonstrates a domain availability checker that uses WHOIS lookups
 ## Quick Start (1-Click Deploy)
 
 1. **Deploy to DigitalOcean** using the button above
-2. **Get your deployed URL** from DigitalOcean (e.g., `https://remote-mcp-server-xxx.ondigitalocean.app`)
+2. **Get your deployed URL** from DigitalOcean (e.g., `https://remote-mcp-server.ondigitalocean.app`)
 3. **Add to your MCP client** using the URL + `/mcp` endpoint
 
 ![Image](https://github.com/user-attachments/assets/d5e7db9e-346d-436b-9c2f-53f014debe17)
@@ -41,7 +41,7 @@ After deploying to DigitalOcean, add your server URL to your MCP client:
 }
 ```
 
-Replace `remote-mcp-server-xxx` with your actual DigitalOcean app URL (with the generated suffix).
+Replace `remote-mcp-server` with your actual DigitalOcean app URL (with the generated suffix).
 
 ![Image](https://github.com/user-attachments/assets/34b5228e-2bb8-4fb4-9326-248a62f9519a)
 
@@ -161,7 +161,7 @@ This MCP server can be deployed as a remote MCP server on DigitalOcean App Platf
    {
      "mcpServers": {
        "domain-checker": {
-         "url": "https://remote-mcp-server-xxx.ondigitalocean.app/mcp",
+         "url": "https://remote-mcp-server.ondigitalocean.app/mcp",
          "description": "Check domain name availability"
        }
      }
