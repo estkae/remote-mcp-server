@@ -34,7 +34,7 @@ After deploying to DigitalOcean, add your server URL to your MCP client:
 {
   "mcpServers": {
     "domain-checker": {
-      "url": "https://remote-mcp-server-xxx.ondigitalocean.app/mcp",
+      "url": "https://remote-mcp-server.ondigitalocean.app/mcp",
       "description": "Check domain availability"
     }
   }
