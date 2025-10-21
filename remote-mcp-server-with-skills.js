@@ -346,6 +346,12 @@ app.post('/execute', async (req, res) => {
       // Route intern
       const routeResult = selectSkills(parameters.user_request, parameters.context);
       result = routeResult;
+    } else if (tool === 'list_all_skills') {
+      // Liste alle Skills auf
+      result = formatAllSkillsList();
+    } else if (tool === 'execute_skill_tool') {
+      // Fuehre spezifisches Tool aus
+      result = await executeSpecificSkillTool(parameters.tool_name, parameters.parameters);
     } else {
       // Simuliere Tool-Ausführung (in Produktion: delegiere an spezialisierte Services)
       result = await simulateToolExecution(tool, parameters);
@@ -357,6 +363,53 @@ app.post('/execute', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+
+// Formatiere alle Skills fuer list_all_skills Tool
+function formatAllSkillsList() {
+  const formattedSkills = skillDefinitions.skills.map(skill => ({
+    id: skill.id,
+    name: skill.name,
+    description: skill.description,
+    keywords: skill.keywords,
+    tools: skill.tools.map(t => ({
+      name: t.name,
+      description: t.description
+    }))
+  }));
+
+  const skillsList = formattedSkills.map((skill, index) => {
+    const toolNames = skill.tools.map(t => t.name).join(', ');
+    const keywords = skill.keywords.join(', ');
+    return `${index + 1}. **${skill.name}** - ${skill.description}\n   ID: ${skill.id}\n   Tools: ${toolNames}\n   Keywords: ${keywords}`;
+  }).join('\n\n');
+
+  return {
+    total_skills: skillDefinitions.skills.length,
+    skills: formattedSkills,
+    message: `📚 Verfügbare Skills (${skillDefinitions.skills.length}):\n\n${skillsList}\n\n💡 Tipp: Verwende skill_router(user_request) um automatisch die richtigen Skills auszuwählen.`
+  };
+}
+
+// Fuehre ein spezifisches Tool aus einem Skill aus
+async function executeSpecificSkillTool(toolName, parameters) {
+  for (const skill of skillDefinitions.skills) {
+    const tool = skill.tools.find(t => t.name === toolName);
+    if (tool) {
+      return {
+        success: true,
+        skill: skill.name,
+        skill_id: skill.id,
+        tool: toolName,
+        parameters: parameters,
+        message: `✅ Tool "${toolName}" aus "${skill.name}" würde in Produktion ausgeführt`,
+        note: 'Dies ist eine Simulation. In Produktion würde das Tool die reale Aktion ausführen.',
+        timestamp: new Date().toISOString()
+      };
+    }
+  }
+  throw new Error(`Tool "${toolName}" nicht gefunden`);
+}
 
 // Tool-Simulation (Fallback wenn keine spezialisierten Services verfügbar)
 async function simulateToolExecution(toolName, parameters) {
