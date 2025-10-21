@@ -1,0 +1,313 @@
+{
+  "skills": [
+    {
+      "id": "powerpoint",
+      "name": "PowerPoint Skill",
+      "description": "Erstellt und bearbeitet PowerPoint-Präsentationen",
+      "keywords": ["powerpoint", "präsentation", "slides", "folien", "pptx", "presentation"],
+      "tools": [
+        {
+          "name": "create_powerpoint_presentation",
+          "description": "Erstellt eine neue PowerPoint-Präsentation (.pptx)",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "filename": {
+                "type": "string",
+                "description": "Name der Datei (z.B. 'präsentation.pptx')"
+              },
+              "title": {
+                "type": "string",
+                "description": "Titel der Präsentation"
+              },
+              "slides": {
+                "type": "array",
+                "description": "Array von Folien",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": { "type": "string" },
+                    "content": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            },
+            "required": ["filename", "slides"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "excel",
+      "name": "Excel Skill",
+      "description": "Erstellt und bearbeitet Excel-Tabellen",
+      "keywords": ["excel", "tabelle", "spreadsheet", "xlsx", "daten", "data"],
+      "tools": [
+        {
+          "name": "create_excel_spreadsheet",
+          "description": "Erstellt eine neue Excel-Tabelle (.xlsx)",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "filename": {
+                "type": "string",
+                "description": "Name der Datei (z.B. 'tabelle.xlsx')"
+              },
+              "sheets": {
+                "type": "array",
+                "description": "Array von Sheets",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string", "description": "Sheet-Name" },
+                    "data": {
+                      "type": "array",
+                      "description": "2D-Array mit Daten",
+                      "items": { "type": "array" }
+                    }
+                  }
+                }
+              }
+            },
+            "required": ["filename", "sheets"]
+          }
+        },
+        {
+          "name": "read_excel_file",
+          "description": "Liest eine Excel-Datei und gibt die Daten zurück",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "filepath": {
+                "type": "string",
+                "description": "Vollständiger Pfad zur Excel-Datei"
+              }
+            },
+            "required": ["filepath"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "brand-guidelines",
+      "name": "Brand Guidelines Skill",
+      "description": "Wendet Brand-Richtlinien auf Inhalte an",
+      "keywords": ["brand", "marke", "corporate design", "branding", "guidelines", "richtlinien", "farben", "logo"],
+      "tools": [
+        {
+          "name": "apply_brand_guidelines",
+          "description": "Wendet Brand-Richtlinien auf einen Text oder Inhalt an",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "content": {
+                "type": "string",
+                "description": "Der Inhalt, auf den die Brand-Richtlinien angewendet werden sollen"
+              },
+              "brand": {
+                "type": "string",
+                "description": "Name der Marke (z.B. 'AALS', 'locara')",
+                "default": "default"
+              },
+              "output_format": {
+                "type": "string",
+                "enum": ["markdown", "html", "text"],
+                "description": "Ausgabeformat",
+                "default": "markdown"
+              }
+            },
+            "required": ["content"]
+          }
+        },
+        {
+          "name": "get_brand_colors",
+          "description": "Gibt die Markenfarben zurück",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "brand": {
+                "type": "string",
+                "description": "Name der Marke",
+                "default": "default"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "pdf",
+      "name": "PDF Skill",
+      "description": "Liest und verarbeitet PDF-Dateien mit OCR",
+      "keywords": ["pdf", "dokument", "lesen", "ocr", "scan", "text extraction"],
+      "tools": [
+        {
+          "name": "read_pdf",
+          "description": "Liest eine PDF-Datei und extrahiert den Text",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "filepath": {
+                "type": "string",
+                "description": "Vollständiger Pfad zur PDF-Datei"
+              },
+              "page_range": {
+                "type": "string",
+                "description": "Seitenbereich (z.B. '1-5' oder 'all')",
+                "default": "all"
+              }
+            },
+            "required": ["filepath"]
+          }
+        },
+        {
+          "name": "read_pdf_with_ocr",
+          "description": "Liest eine gescannte PDF-Datei mit OCR",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "filepath": {
+                "type": "string",
+                "description": "Vollständiger Pfad zur PDF-Datei"
+              },
+              "language": {
+                "type": "string",
+                "description": "Sprache für OCR (z.B. 'deu', 'eng')",
+                "default": "deu"
+              }
+            },
+            "required": ["filepath"]
+          }
+        },
+        {
+          "name": "list_pdfs",
+          "description": "Listet alle PDF-Dateien in einem Verzeichnis auf",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "directory": {
+                "type": "string",
+                "description": "Verzeichnispfad"
+              }
+            },
+            "required": ["directory"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "code-review",
+      "name": "Code Review Skill",
+      "description": "Führt Code-Reviews und Qualitätsprüfungen durch",
+      "keywords": ["code", "review", "quality", "lint", "static analysis", "bugs", "security"],
+      "tools": [
+        {
+          "name": "review_code",
+          "description": "Führt ein Code-Review durch",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Der zu prüfende Code"
+              },
+              "language": {
+                "type": "string",
+                "description": "Programmiersprache (z.B. 'javascript', 'python', 'java')"
+              },
+              "focus": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["security", "performance", "style", "bugs", "best-practices"]
+                },
+                "description": "Fokus der Review",
+                "default": ["bugs", "security"]
+              }
+            },
+            "required": ["code", "language"]
+          }
+        },
+        {
+          "name": "suggest_improvements",
+          "description": "Schlägt Verbesserungen für Code vor",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Der Code, der verbessert werden soll"
+              },
+              "language": {
+                "type": "string",
+                "description": "Programmiersprache"
+              }
+            },
+            "required": ["code", "language"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "blog-writer",
+      "name": "Blog Writer Skill",
+      "description": "Erstellt und optimiert Blog-Artikel und Content",
+      "keywords": ["blog", "artikel", "content", "seo", "writing", "text", "post"],
+      "tools": [
+        {
+          "name": "write_blog_post",
+          "description": "Erstellt einen Blog-Artikel",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "topic": {
+                "type": "string",
+                "description": "Thema des Blog-Artikels"
+              },
+              "keywords": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "SEO-Keywords"
+              },
+              "tone": {
+                "type": "string",
+                "enum": ["professional", "casual", "technical", "friendly"],
+                "description": "Tonalität des Artikels",
+                "default": "professional"
+              },
+              "length": {
+                "type": "string",
+                "enum": ["short", "medium", "long"],
+                "description": "Länge des Artikels",
+                "default": "medium"
+              }
+            },
+            "required": ["topic"]
+          }
+        },
+        {
+          "name": "optimize_for_seo",
+          "description": "Optimiert einen Text für SEO",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "content": {
+                "type": "string",
+                "description": "Der zu optimierende Text"
+              },
+              "target_keywords": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Ziel-Keywords"
+              }
+            },
+            "required": ["content", "target_keywords"]
+          }
+        }
+      ]
+    }
+  ]
+}

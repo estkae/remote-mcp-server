@@ -1,1 +1,1 @@
-web: python skill-router.py
+web: node remote-mcp-server-with-skills.js
