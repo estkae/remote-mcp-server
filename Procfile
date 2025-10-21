@@ -1,1 +1,1 @@
-web: python domain-checker.py
+web: python skill-router.py
