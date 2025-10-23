@@ -1,0 +1,21 @@
+spec:
+  name: remote-mcp-server
+  region: fra
+  services:
+    - name: web
+      environment_slug: node-js
+      git:
+        branch: main
+        repo_clone_url: https://github.com/estkae/remote-mcp-server
+      build_command: npm install
+      run_command: node remote-mcp-server-with-skills.js
+      http_port: 8080
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      routes:
+        - path: /
+      envs:
+        - key: PORT
+          value: "8080"
+        - key: NODE_ENV
+          value: "production"
