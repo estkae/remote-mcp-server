@@ -1,14 +1,35 @@
 {
   "name": "remote-mcp-server",
   "version": "2.1.0",
-  "description": "Remote MCP Server with Skill-Routing + Kerio Connect Integration",
+  "description": "Remote MCP Server with Skill-Routing + Kerio Connect Integration - Token-optimized MCP server with intelligent skill routing and email integration",
   "main": "remote-mcp-server-with-skills.js",
   "scripts": {
-    "start": "node remote-mcp-server-with-skills.js"
+    "start": "node remote-mcp-server-with-skills.js",
+    "dev": "NODE_ENV=development node remote-mcp-server-with-skills.js"
   },
   "engines": {
     "node": ">=18.0.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/estkae/remote-mcp-server.git"
+  },
+  "homepage": "https://github.com/estkae/remote-mcp-server#readme",
+  "bugs": {
+    "url": "https://github.com/estkae/remote-mcp-server/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "remote-server",
+    "skill-routing",
+    "token-optimization",
+    "kerio-connect",
+    "email-integration",
+    "claude",
+    "ai",
+    "digitalocean"
+  ],
   "dependencies": {
     "express": "^4.18.2",
     "cors": "^2.8.5",

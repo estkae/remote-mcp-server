@@ -1,103 +1,162 @@
-# Remote MCP Server Template
+# Remote MCP Server with Skill-Routing
 
-This is a template for creating **remote MCP servers** that can be deployed to DigitalOcean App Platform. Remote MCP servers allow you to deploy MCP functionality to the cloud and use it from any MCP-compatible client (Claude Desktop, Cursor, Windsurf, etc.) without local installation.
+A production-ready Remote MCP (Model Context Protocol) Server with intelligent skill-routing and Kerio Connect email integration. Built for deployment on DigitalOcean App Platform with **90% token optimization**.
 
-## This Specific Implementation: Domain Checker
-
-This template demonstrates a domain availability checker that uses WHOIS lookups and DNS resolution. Built with the modern FastMCP framework for reliable domain availability checking.
-
-## Deploy this Remote MCP Server to DigitalOcean
 [![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/estkae/remote-mcp-server/tree/main)
-
-## Quick Start (1-Click Deploy)
-
-1. **Deploy to DigitalOcean** using the button above
-2. **Get your deployed URL** from DigitalOcean (e.g., `https://remote-mcp-server-8h8cr.ondigitalocean.app`)
-3. **Add to your MCP client** using the URL + `/mcp` endpoint
-
-![Image](https://github.com/user-attachments/assets/d5e7db9e-346d-436b-9c2f-53f014debe17)
 
 ## Features
 
-- ✅ **Dual Verification**: Uses both WHOIS and DNS resolution for accurate results
-- 🚀 **Async Operations**: Non-blocking operations with proper timeout handling
-- 📊 **Batch Processing**: Check multiple domains concurrently
-- 🔍 **Detailed Analysis**: Provides comprehensive availability information
+- **Intelligent Skill-Routing**: Token-optimized routing system that loads only required skills
+- **6 Built-in Skills**: PowerPoint, Excel, Brand Guidelines, PDF, Code Review, Blog Writer
+- **Kerio Connect Integration**: Full IMAP/SMTP support for email management
+- **90% Token Savings**: Reduces token usage from 890 to ~8 tokens for initial load
+- **DigitalOcean Ready**: One-click deployment to App Platform
+- **MCP Protocol Standard**: Works with Claude Desktop, Cursor, Windsurf, and other MCP clients
 
-## Using Your Remote MCP Server
+## Quick Start
 
-### Option 1: Use Your Deployed Remote MCP Server (Recommended)
+### Deploy to DigitalOcean (Recommended)
 
-After deploying to DigitalOcean, add your server URL to your MCP client:
+1. Click the "Deploy to DO" button above
+2. Connect your GitHub repository
+3. Set environment variables (optional for Kerio Connect)
+4. Deploy and get your URL (e.g., `https://your-app.ondigitalocean.app`)
+
+### Configure MCP Client
+
+Add to your MCP client configuration:
+
+**Claude Desktop / Cursor / Windsurf:**
 
 ```json
 {
   "mcpServers": {
-    "domain-checker": {
-      "url": "https://remote-mcp-server-8h8cr.ondigitalocean.app/mcp",
-      "description": "Check domain availability"
+    "remote-skills": {
+      "url": "https://your-app.ondigitalocean.app",
+      "description": "Remote MCP Server with Skill-Routing"
     }
   }
 }
 ```
 
-![Image](https://github.com/user-attachments/assets/34b5228e-2bb8-4fb4-9326-248a62f9519a)
-
-### Option 2: With FastMCP Development Tools
-
-```bash
-# Make sure your virtual environment is activated
-fastmcp dev local-domain-checker.py
-```
-![Image](https://github.com/user-attachments/assets/beb32cf0-499f-40d3-aeda-a255291ca5f3)
-
-### Option 3: Configure Local MCP Server
-
-This MCP server works with Claude Desktop, Cursor, Windsurf, and other MCP-compatible applications.
-
-#### Configuration Locations
-
+Configuration file locations:
 - **Claude Desktop**:
   - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
-
-![Image](https://github.com/user-attachments/assets/c855b19a-9498-47c5-88cd-a778d04319a0)
-  
 - **Cursor**:
   - macOS: `~/Library/Application Support/Cursor/cursor_desktop_config.json`
   - Windows: `%APPDATA%\Cursor\cursor_desktop_config.json`
-
-[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=domain-checker&config=eyJjb21tYW5kIjoicHl0aG9uIC9wYXRoL3RvL3lvdXIvZG9tYWluX2NoZWNrZXIucHkifQ%3D%3D)
-
-
 - **Windsurf**:
   - macOS: `~/Library/Application Support/Windsurf/windsurf_desktop_config.json`
   - Windows: `%APPDATA%\Windsurf\windsurf_desktop_config.json`
 
-Add the following configuration to the appropriate file, making sure to point to your virtual environment:
+## Architecture
 
+### Skill-Routing System
+
+The server uses an intelligent routing system that dramatically reduces token usage:
+
+```
+Traditional Approach: Load all skills upfront = 890 tokens
+With Skill-Router: Load router only = 8 tokens
+Average Savings: 90% (when routing to specific skills)
+```
+
+**How it works:**
+
+1. Client loads only the `skill_router` tool (8 tokens)
+2. User makes a request (e.g., "Create a PowerPoint presentation")
+3. Router analyzes keywords and selects relevant skills
+4. Only selected skills are loaded on-demand
+5. Total: 8 + ~50 tokens per skill = ~108 tokens vs. 890 tokens
+
+## Available Skills
+
+| Skill | Description | Keywords | Tools |
+|-------|-------------|----------|-------|
+| **PowerPoint** | Create PowerPoint presentations | powerpoint, presentation, slides, pptx | create_powerpoint |
+| **Excel** | Create and analyze Excel spreadsheets | excel, spreadsheet, xlsx, data | create_excel |
+| **Brand Guidelines** | Apply brand guidelines to content | brand, corporate, branding, guidelines | apply_brand_guidelines |
+| **PDF** | Read and process PDF files | pdf, document, read, ocr | read_pdf |
+| **Code Review** | Review code quality and security | code, review, quality, bugs, security | review_code |
+| **Blog Writer** | Write blog posts and content | blog, article, content, seo, writing | write_blog_post |
+
+## Kerio Connect Integration
+
+The server includes built-in Kerio Connect email integration with the following capabilities:
+
+### Email Tools
+
+- `kerio_list_emails`: List emails from inbox or specific folder
+- `kerio_read_email`: Read specific email with full content and attachments
+- `kerio_send_email`: Send emails with attachments
+- `kerio_search_emails`: Search emails by subject, sender, date range
+
+### Configuration
+
+Set these environment variables to enable Kerio Connect:
+
+```bash
+KERIO_HOST=mail.example.com
+KERIO_IMAP_PORT=993
+KERIO_SMTP_PORT=465
+KERIO_USERNAME=your.email@domain.com
+KERIO_PASSWORD=your_password
+KERIO_USE_SSL=true
+```
+
+## API Endpoints
+
+### Core Endpoints
+
+- `GET /` - Service information and status
+- `GET /health` - Health check endpoint
+- `GET /tools` - List available tools (router + Kerio if configured)
+- `GET /skills` - List all available skills with details
+
+### Routing Endpoints
+
+- `POST /route` - Analyze request and select appropriate skills
+- `POST /execute` - Execute a specific tool
+
+### Example: Skill Routing
+
+```bash
+curl -X POST https://your-app.ondigitalocean.app/route \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_request": "Create a PowerPoint presentation about Q3 results",
+    "context": ""
+  }'
+```
+
+Response:
 ```json
 {
-  "mcpServers": {
-    "domain-checker": {
-      "command": "/path/to/your/venv/bin/python",
-      "args": ["/path/to/your/local-domain-checker.py"]
+  "success": true,
+  "selected_skills": [
+    {
+      "id": "powerpoint",
+      "name": "PowerPoint Skill",
+      "description": "Erstellt PowerPoint-Präsentationen",
+      "tool_count": 1
     }
+  ],
+  "tools": [...],
+  "token_savings": {
+    "without_routing": 890,
+    "with_routing": 58,
+    "savings_percentage": 93
   }
 }
 ```
 
-**Important**: 
-- Replace paths with the actual paths to your virtual environment and domain checker directory
-- Use `local-domain-checker.py` for local development (it has simpler configuration without port/host settings)
-- `domain-checker.py` is configured for remote deployment with additional parameters
-
-## Installation (For Local Use)
+## Local Development
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- pip package manager
+- Node.js 18.0.0 or higher
+- npm or yarn
 
 ### Setup
 
@@ -107,124 +166,174 @@ Add the following configuration to the appropriate file, making sure to point to
    cd remote-mcp-server
    ```
 
-2. **Create and activate a virtual environment (recommended)**
+2. **Install dependencies**
    ```bash
-   python -m venv venv
-   # On macOS/Linux
-   source venv/bin/activate
-   # On Windows
-   venv\Scripts\activate
+   npm install
    ```
 
-3. **Install dependencies**
+3. **Configure environment (optional)**
    ```bash
-   pip install -r requirements.txt
+   cp .env.example .env
+   # Edit .env with your Kerio Connect credentials
    ```
 
-## Deploy to DigitalOcean App Platform
-
-This MCP server can be deployed as a remote MCP server on DigitalOcean App Platform.
-
-### Prerequisites
-
-- A DigitalOcean account
-- The [doctl](https://docs.digitalocean.com/reference/doctl/how-to/install/) command-line tool (optional)
-- Git repository with your code
-
-### Deployment Steps
-
-1. **Push your code to a Git repository**
-   Make sure all your changes are committed and pushed to a GitHub, GitLab, or Bitbucket repository.
-
-2. **Create a new App on DigitalOcean App Platform**
-   - Go to the [DigitalOcean App Platform](https://cloud.digitalocean.com/apps) dashboard
-   - Click "Create App" and select your Git repository
-   - Select the branch you want to deploy
-   - Choose "Python" as the environment
-
-3. **Configure the App**
-   - Set the source directory to `/`
-   - Set the run command to: `python domain-checker.py`
-   - Set the environment variable: `PORT=8080`
-   - Set HTTP port to 8080
-
-4. **Deploy the App**
-   - Click "Deploy to Production"
-   - Wait for the build and deployment to complete
-
-5. **Configure as Remote MCP**
-   Once deployed, you can use the app URL as a remote MCP server in your MCP-compatible applications:
-
-   ```json
-   {
-     "mcpServers": {
-       "domain-checker": {
-         "url": "https://remote-mcp-server-8h8cr.ondigitalocean.app/mcp",
-         "description": "Check domain name availability"
-       }
-     }
-   }
+4. **Start the server**
+   ```bash
+   npm start
    ```
 
-### Updating Your Deployment
+5. **Test the server**
+   ```bash
+   curl http://localhost:8080/health
+   ```
 
-To update your deployed app, simply push changes to your Git repository. DigitalOcean App Platform will automatically build and deploy the new version.
+## Deployment
+
+### DigitalOcean App Platform
+
+This server is optimized for DigitalOcean App Platform with auto-deployment:
+
+1. **Push to GitHub**
+   ```bash
+   git add .
+   git commit -m "Your changes"
+   git push origin main
+   ```
+
+2. **Auto-Deploy**
+   - DigitalOcean detects the push
+   - Builds the application
+   - Deploys automatically (2-3 minutes)
+
+3. **Verify Deployment**
+   ```bash
+   curl https://your-app.ondigitalocean.app/health
+   ```
+
+### Configuration
+
+The server uses the following configuration:
+
+- **Procfile**: `web: node remote-mcp-server-with-skills.js`
+- **Port**: 8080 (auto-configured via PORT environment variable)
+- **Node Version**: >=18.0.0 (specified in package.json)
 
 ## Usage Examples
 
-### Check Single Domain
-"Check if myawesome-startup.com is available"
-
-### Check Multiple Domains
-"Check availability for these domains: mycompany.com, mycompany.net, mycompany.org"
-
-## Understanding Results
-
-### Availability Status
-
-- **✅ LIKELY AVAILABLE**: Domain appears to be unregistered and available
-- **❌ NOT AVAILABLE**: Domain is registered and not available
-- **❓ UNCLEAR**: Mixed signals - manual verification recommended
-
-### Sample Output
+### Example 1: List Available Skills
 
 ```
-Domain: example-startup.com
-Status: ✅ LIKELY AVAILABLE
+User: "What skills are available?"
+Router: Analyzes and lists all 6 skills with descriptions
+```
 
-WHOIS Check: Available
-DNS Resolution: Not resolving
+### Example 2: Create PowerPoint
 
-Details:
-{
-  "whois": {
-    "available": true,
-    "reason": "WHOIS parser error: No match for domain"
-  },
-  "dns": {
-    "resolvable": false,
-    "reason": "Domain does not resolve (NXDOMAIN)"
-  }
-}
+```
+User: "Create a PowerPoint presentation about Q3 financial results"
+Router: Selects PowerPoint skill (keyword: "powerpoint", "presentation")
+Result: PowerPoint tool is loaded and executed
+```
+
+### Example 3: Check Email
+
+```
+User: "List my recent emails"
+Router: Kerio Connect integration handles the request
+Result: Returns list of emails from inbox
+```
+
+### Example 4: Multi-Skill Request
+
+```
+User: "Create a presentation with charts from Excel data"
+Router: Selects PowerPoint + Excel skills (keywords: "presentation", "excel")
+Result: Both tools are loaded for combined workflow
+```
+
+## Token Optimization Details
+
+### Cost Comparison (10,000 requests/month)
+
+**Without Skill-Routing:**
+```
+10,000 × 890 tokens = 8,900,000 tokens
+Cost: ~$26.70/month (at $0.000003 per token)
+```
+
+**With Skill-Routing:**
+```
+10,000 × 100 tokens (average) = 1,000,000 tokens
+Cost: ~$3.00/month (at $0.000003 per token)
+```
+
+**Annual Savings: $284.40**
+
+## Project Structure
+
+```
+remote-mcp-server/
+├── remote-mcp-server-with-skills.js  # Main server with skill-routing
+├── kerio-connector.js                # Kerio Connect integration
+├── skill-definitions.json            # External skill definitions (optional)
+├── package.json                      # Node.js dependencies
+├── Procfile                          # DigitalOcean deployment config
+├── .env.example                      # Environment variables template
+└── README.md                         # This file
 ```
 
 ## Troubleshooting
 
-### Common Issues
+### Server won't start
 
-**1. Import Errors**
-- Make sure your virtual environment is activated
-- Verify all dependencies are installed: `pip install -r requirements.txt`
+**Check Node.js version:**
+```bash
+node --version  # Should be >= 18.0.0
+```
 
-**2. Timeout Issues**
-- Some WHOIS servers have rate limits
-- Network connectivity issues can cause timeouts
+**Check dependencies:**
+```bash
+npm install
+```
 
-**3. DigitalOcean Deployment Issues**
-- Check that the port is set to 8080 in both the code and the App Platform configuration
-- Verify that all dependencies are in requirements.txt
-- Check the deployment logs for any error messages
+### Kerio Connect not working
+
+**Verify environment variables:**
+```bash
+echo $KERIO_HOST
+echo $KERIO_USERNAME
+```
+
+**Check server logs:**
+- DigitalOcean: Runtime Logs tab
+- Local: Console output
+
+### Tools not appearing in MCP client
+
+**Clear MCP client cache:**
+1. Remove the server URL from settings
+2. Save settings
+3. Add the server URL again
+4. Restart the MCP client
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT License - see LICENSE file for details
+
+## Support
+
+For issues and questions:
+- GitHub Issues: https://github.com/estkae/remote-mcp-server/issues
+- Documentation: See README-SKILL-ROUTER.md for detailed routing guide
+
+## Credits
+
+Developed by AALS Software AG
 
 ---
 
-**Disclaimer**: This tool provides estimates of domain availability. Always verify availability through official domain registrars before making any purchase decisions.
+**Note**: This server is designed for production use. All tools (except Kerio Connect) are currently simulated. To add real tool execution, integrate with specialized services or implement tool logic in the execute endpoint.
