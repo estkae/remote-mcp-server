@@ -15,6 +15,16 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 8080; // DigitalOcean Standard-Port
+// Kerio Connect Integration
+let kerioConnector;
+try {
+  kerioConnector = require('./kerio-connector');
+  console.log('✅ Kerio Connector loaded');
+} catch (error) {
+  console.log('⚠️  Kerio Connector not available:', error.message);
+  kerioConnector = null;
+}
+
 
 // Skill-Definitionen laden
 let skillDefinitions = null;
@@ -255,11 +265,12 @@ function selectSkills(userRequest, context = '') {
 app.get('/', (req, res) => {
   res.json({
     service: '🎯 Remote MCP Server with Skill-Routing',
-    version: '2.0',
+    version: '2.1.0',
     features: [
       'Token-optimized Skill Routing (~90% savings)',
       'Intelligent Skill Selection',
-      '6 Skills: PowerPoint, Excel, Brand, PDF, Code Review, Blog Writer'
+      '6 Skills: PowerPoint, Excel, Brand, PDF, Code Review, Blog Writer',
+      'Kerio Connect Email Integration (IMAP/SMTP)'
     ],
     endpoints: {
       'GET /': 'This page',
@@ -274,10 +285,19 @@ app.get('/', (req, res) => {
   });
 });
 
-// GET /tools - Gibt nur den Router zurück (Token-Optimierung!)
+// GET /tools - Gibt Router + Kerio Tools zurück
 app.get('/tools', (req, res) => {
-  console.log('📋 /tools - Returning Router Tool (8 Tokens)');
-  res.json([routerTool]);
+  const tools = [routerTool];
+  
+  // Add Kerio tools if configured
+  if (kerioConnector && kerioConnector.isKerioConfigured()) {
+    tools.push(...kerioConnector.KERIO_TOOLS);
+    console.log('📋 /tools - Returning Router + Kerio Tools (' + (tools.length) + ' tools)');
+  } else {
+    console.log('📋 /tools - Returning Router Tool only (Kerio not configured)');
+  }
+  
+  res.json(tools);
 });
 
 // POST /route - Skill-Selektion
@@ -352,6 +372,28 @@ app.post('/execute', async (req, res) => {
     } else if (tool === 'execute_skill_tool') {
       // Fuehre spezifisches Tool aus
       result = await executeSpecificSkillTool(parameters.tool_name, parameters.parameters);
+    } else if (tool.startsWith('kerio_')) {
+      // Kerio Connect Tools
+      if (!kerioConnector || !kerioConnector.isKerioConfigured()) {
+        throw new Error('Kerio Connect not configured. Set KERIO_HOST, KERIO_USERNAME, KERIO_PASSWORD');
+      }
+      
+      switch(tool) {
+        case 'kerio_list_emails':
+          result = await kerioConnector.listEmails(parameters || {});
+          break;
+        case 'kerio_read_email':
+          result = await kerioConnector.readEmail(parameters);
+          break;
+        case 'kerio_send_email':
+          result = await kerioConnector.sendEmail(parameters);
+          break;
+        case 'kerio_search_emails':
+          result = await kerioConnector.searchEmails(parameters);
+          break;
+        default:
+          throw new Error('Unknown Kerio tool: ' + tool);
+      }
     } else {
       // Simuliere Tool-Ausführung (in Produktion: delegiere an spezialisierte Services)
       result = await simulateToolExecution(tool, parameters);
@@ -458,7 +500,7 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     service: 'Remote MCP Server with Skill-Routing',
-    version: '2.0',
+    version: '2.1.0',
     skills_loaded: skillDefinitions?.skills.length || 0,
     token_optimization: 'enabled',
     routing_strategy: 'keyword-based',
