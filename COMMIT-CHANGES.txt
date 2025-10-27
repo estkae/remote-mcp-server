@@ -1,0 +1,48 @@
+# Änderungen für manuellen Commit
+
+## Git Repository hat mmap-Problem (OneDrive + Windows)
+
+Die folgenden Änderungen müssen manuell committed werden:
+
+### Geänderte Dateien:
+
+1. **.gitignore** - node_modules/ hinzugefügt
+2. **Procfile** - NODE_ENV=production hinzugefügt
+3. **package.json** - Version 2.2.0, docx + pdf-parse Dependencies
+4. **package-lock.json** - Neue Dependencies
+5. **remote-mcp-server-with-skills.js** - Word Skill, Version 2.2.0, Production Mode
+6. **test-server.js** - Test-Script (optional)
+
+### Bereits committed:
+
+✅ PRODUCTION-MODE.md
+✅ QUICKSTART-PRODUCTION.md
+✅ SKILLS-OVERVIEW.md
+✅ production-tools.js 
+
+Commit: 5865f98
+
+### Empfohlene Lösung:
+
+Option A: Repository außerhalb von OneDrive klonen und dort committen
+Option B: GitHub Desktop oder VS Code Git verwenden (besseres mmap-Handling)
+Option C: Änderungen direkt auf GitHub via Web-UI hochladen
+
+### Commit Message für restliche Änderungen:
+
+```
+Update dependencies and enable production mode (v2.2.0)
+
+- Update package.json to v2.2.0
+- Add docx (Word) and pdf-parse (PDF) dependencies
+- Add Word Skill to router (create_word tool)
+- Update Procfile for NODE_ENV=production
+- Enhance health endpoint with production status
+- Update .gitignore to exclude node_modules
+```
+
+### Push-Befehl:
+
+```bash
+git push origin main
+```
