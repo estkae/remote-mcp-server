@@ -269,6 +269,7 @@ async function createWord(parameters) {
   if (!title || !content) {
     throw new Error('Invalid parameters: title and content required');
   }
+  const contentArray = Array.isArray(content) ? content : content.split('\n\n');
 
   // Erstelle Dokument
   const doc = new Document({
