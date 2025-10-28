@@ -390,6 +390,27 @@ app.post('/execute', async (req, res) => {
     } else if (tool === 'execute_skill_tool') {
       // Fuehre spezifisches Tool aus
       result = await executeSpecificSkillTool(parameters.tool_name, parameters.parameters);
+    } else if (['create_powerpoint', 'create_powerpoint_presentation'].includes(tool)) {
+      // Office Tool: PowerPoint
+      if (officeTools) {
+        result = await officeTools.createPowerPoint(parameters);
+      } else {
+        throw new Error('Office Tools not available');
+      }
+    } else if (['create_excel', 'create_excel_spreadsheet'].includes(tool)) {
+      // Office Tool: Excel
+      if (officeTools) {
+        result = await officeTools.createExcel(parameters);
+      } else {
+        throw new Error('Office Tools not available');
+      }
+    } else if (['create_word', 'create_word_document'].includes(tool)) {
+      // Office Tool: Word
+      if (officeTools) {
+        result = await officeTools.createWord(parameters);
+      } else {
+        throw new Error('Office Tools not available');
+      }
     } else if (tool.startsWith('kerio_')) {
       // Kerio Connect Tools
       if (!kerioConnector || !kerioConnector.isKerioConfigured()) {
