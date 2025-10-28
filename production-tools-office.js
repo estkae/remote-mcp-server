@@ -286,7 +286,7 @@ async function createWord(parameters) {
           spacing: { after: 400 }
         }),
         // Content (einfache Absätze)
-        ...content.split('\n\n').map(para =>
+        ...contentArray.map(para =>
           new Paragraph({
             children: [
               new TextRun({
