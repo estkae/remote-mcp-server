@@ -11,7 +11,7 @@ services:
     build_command: npm install
 
     # Run Configuration
-    run_command: node start-with-downloads.js
+    run_command: node remote-mcp-server-with-skills.js
 
     # Environment Settings
     environment_slug: node-js

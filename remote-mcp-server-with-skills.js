@@ -25,6 +25,24 @@ try {
   kerioConnector = null;
 }
 
+// File-Server und Office-Tools Integration
+const SERVER_URL = process.env.SERVER_URL || `http://localhost:${PORT}`;
+process.env.SERVER_URL = SERVER_URL;
+
+let officeTools, fileServer;
+try {
+  fileServer = require('./file-server');
+  officeTools = require('./production-tools-office-with-downloads');
+  fileServer.setupFileServer(app);
+  fileServer.startTokenCleanupJob(15);
+  console.log('✅ File-Server mit Download-Links aktiviert');
+  console.log('✅ Office Tools (PowerPoint, Excel, Word) geladen');
+} catch (error) {
+  console.log('⚠️  Office Tools not available:', error.message);
+  officeTools = null;
+}
+
+
 
 // Skill-Definitionen laden
 let skillDefinitions = null;
@@ -435,6 +453,18 @@ function formatAllSkillsList() {
 
 // Fuehre ein spezifisches Tool aus einem Skill aus
 async function executeSpecificSkillTool(toolName, parameters) {
+  // Check for real Office Tools first
+  if (officeTools) {
+    if (toolName === 'create_powerpoint') {
+      return await officeTools.createPowerPoint(parameters);
+    } else if (toolName === 'create_excel') {
+      return await officeTools.createExcel(parameters);
+    } else if (toolName === 'create_word') {
+      return await officeTools.createWord(parameters);
+    }
+  }
+
+  // Fallback: simulation for other tools
   for (const skill of skillDefinitions.skills) {
     const tool = skill.tools.find(t => t.name === toolName);
     if (tool) {
