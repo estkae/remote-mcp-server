@@ -127,7 +127,8 @@ async function createPowerPoint(parameters) {
   });
 
   // Dateiname generieren
-  const outputFilename = filename || `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pptx`;
+  let outputFilename = filename || `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pptx`;
+  if (!outputFilename.endsWith('.pptx')) outputFilename += '.pptx';
   const outputPath = path.join(OUTPUT_DIR, outputFilename);
 
   // Datei speichern
@@ -207,6 +208,7 @@ async function createExcel(parameters) {
           fgColor: { argb: 'FFE0E0E0' }
         };
 
+  if (!outputFilename.endsWith('.xlsx')) outputFilename += '.xlsx';
         // Daten-Rows
         for (let i = 1; i < sheetData.data.length; i++) {
           worksheet.addRow(sheetData.data[i]);
@@ -307,6 +309,7 @@ async function createWord(parameters) {
   });
 
   // Dateiname generieren
+  if (!outputFilename.endsWith('.docx')) outputFilename += '.docx';
   const outputFilename = filename || `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.docx`;
   const outputPath = path.join(OUTPUT_DIR, outputFilename);
 
