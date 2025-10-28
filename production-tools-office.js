@@ -310,8 +310,9 @@ async function createWord(parameters) {
   });
 
   // Dateiname generieren
+  let outputFilename = filename || `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.docx`;
   if (!outputFilename.endsWith('.docx')) outputFilename += '.docx';
-  const outputFilename = filename || `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.docx`;
+  const outputPath = path.join(OUTPUT_DIR, outputFilename);
   const outputPath = path.join(OUTPUT_DIR, outputFilename);
 
   // Datei speichern
