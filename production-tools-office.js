@@ -11,6 +11,14 @@ const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = re
 const fs = require('fs').promises;
 const path = require('path');
 
+// File-Server für Download-Links
+let fileServer = null;
+try {
+  fileServer = require('./file-server');
+} catch (error) {
+  console.log('⚠️  file-server.js nicht verfügbar - Download-Links werden nicht generiert');
+}
+
 // Output-Verzeichnis für generierte Dateien
 const OUTPUT_DIR = process.env.OUTPUT_DIR || path.join(__dirname, 'output');
 
@@ -131,7 +139,13 @@ async function createPowerPoint(parameters) {
   const stats = await fs.stat(outputPath);
   const fileSizeKB = (stats.size / 1024).toFixed(2);
 
-  return {
+  // Download-Link generieren
+  let downloadInfo = null;
+  if (fileServer) {
+    downloadInfo = fileServer.generateDownloadToken(outputPath, 60); // 60 Minuten gültig
+  }
+
+  const result = {
     success: true,
     tool: 'create_powerpoint',
     filename: outputFilename,
@@ -142,6 +156,16 @@ async function createPowerPoint(parameters) {
     mode: 'PRODUCTION',
     timestamp: new Date().toISOString()
   };
+
+  // Download-Infos hinzufügen, falls verfügbar
+  if (downloadInfo) {
+    result.download_url = downloadInfo.download_url;
+    result.download_token = downloadInfo.token;
+    result.download_expires_at = downloadInfo.expires_at;
+    result.download_expires_in = `${downloadInfo.expires_in_minutes} Minuten`;
+  }
+
+  return result;
 }
 
 /**
