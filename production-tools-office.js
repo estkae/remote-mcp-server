@@ -181,6 +181,10 @@ async function createExcel(parameters) {
   await ensureOutputDir();
 
   const { filename, sheets } = parameters;
+n  // Dateiname generieren
+  let outputFilename = filename || `${(parameters.title || 'spreadsheet').replace(/[^a-z0-9]/gi, '_').toLowerCase()}.xlsx`;
+  if (!outputFilename.endsWith('.xlsx')) outputFilename += '.xlsx';
+  const outputPath = path.join(OUTPUT_DIR, outputFilename);
 
   // Validierung
   if (!filename || !sheets || !Array.isArray(sheets)) {
@@ -208,7 +212,6 @@ async function createExcel(parameters) {
           fgColor: { argb: 'FFE0E0E0' }
         };
 
-  if (!outputFilename.endsWith('.xlsx')) outputFilename += '.xlsx';
         // Daten-Rows
         for (let i = 1; i < sheetData.data.length; i++) {
           worksheet.addRow(sheetData.data[i]);
