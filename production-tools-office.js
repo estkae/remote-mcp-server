@@ -181,7 +181,7 @@ async function createExcel(parameters) {
   await ensureOutputDir();
 
   const { filename, sheets } = parameters;
-n  // Dateiname generieren
+  // Dateiname generieren
   let outputFilename = filename || `${(parameters.title || 'spreadsheet').replace(/[^a-z0-9]/gi, '_').toLowerCase()}.xlsx`;
   if (!outputFilename.endsWith('.xlsx')) outputFilename += '.xlsx';
   const outputPath = path.join(OUTPUT_DIR, outputFilename);
@@ -233,7 +233,6 @@ n  // Dateiname generieren
   });
 
   // Datei speichern
-  const outputPath = path.join(OUTPUT_DIR, filename);
   await workbook.xlsx.writeFile(outputPath);
 
   console.log(`✅ Excel erstellt: ${outputPath}`);
