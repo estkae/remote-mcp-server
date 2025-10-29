@@ -420,13 +420,15 @@
     {
       "id": "word",
       "name": "Word Skill",
-      "description": "Erstellt und bearbeitet Word-Dokumente",
+      "description": "Erstellt und bearbeitet Word-Dokumente (.docx) - für bearbeitbare Dokumente",
       "keywords": [
         "word",
-        "dokument",
-        "document",
         "docx",
-        "text"
+        "word dokument",
+        "word-datei",
+        "microsoft word",
+        "als word",
+        "bearbeitbar"
       ],
       "tools": [
         {
@@ -471,13 +473,15 @@
     {
       "id": "pdf-creator",
       "name": "PDF Creator Skill",
-      "description": "Erstellt PDF-Dokumente",
+      "description": "Erstellt PDF-Dokumente direkt - für finale PDF-Ausgabe",
       "keywords": [
         "pdf",
-        "dokument",
-        "erstellen",
-        "create",
-        "document"
+        "als pdf",
+        "pdf erstellen",
+        "pdf dokument",
+        "pdf-datei",
+        "pdf format",
+        "portable document format"
       ],
       "tools": [
         {
