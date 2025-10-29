@@ -411,6 +411,13 @@ app.post('/execute', async (req, res) => {
       } else {
         throw new Error('Office Tools not available');
       }
+    } else if (['create_pdf', 'create_pdf_document'].includes(tool)) {
+      // Office Tool: PDF
+      if (officeTools) {
+        result = await officeTools.createPDF(parameters);
+      } else {
+        throw new Error('Office Tools not available');
+      }
     } else if (tool.startsWith('kerio_')) {
       // Kerio Connect Tools
       if (!kerioConnector || !kerioConnector.isKerioConfigured()) {
