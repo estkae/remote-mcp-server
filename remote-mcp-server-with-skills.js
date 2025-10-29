@@ -49,7 +49,7 @@ let skillDefinitions = null;
 
 async function loadSkillDefinitions() {
   try {
-    const filePath = path.join(__dirname, 'skills', 'skill-definitions.json');
+    const filePath = path.join(__dirname, 'skill-definitions.json');
     const data = await fs.readFile(filePath, 'utf-8');
     skillDefinitions = JSON.parse(data);
     console.log(`✅ ${skillDefinitions.skills.length} Skills geladen`);
