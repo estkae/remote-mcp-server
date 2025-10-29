@@ -4,7 +4,14 @@
       "id": "powerpoint",
       "name": "PowerPoint Skill",
       "description": "Erstellt und bearbeitet PowerPoint-Präsentationen",
-      "keywords": ["powerpoint", "präsentation", "slides", "folien", "pptx", "presentation"],
+      "keywords": [
+        "powerpoint",
+        "präsentation",
+        "slides",
+        "folien",
+        "pptx",
+        "presentation"
+      ],
       "tools": [
         {
           "name": "create_powerpoint_presentation",
@@ -26,16 +33,23 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "title": { "type": "string" },
+                    "title": {
+                      "type": "string"
+                    },
                     "content": {
                       "type": "array",
-                      "items": { "type": "string" }
+                      "items": {
+                        "type": "string"
+                      }
                     }
                   }
                 }
               }
             },
-            "required": ["filename", "slides"]
+            "required": [
+              "filename",
+              "slides"
+            ]
           }
         }
       ]
@@ -44,7 +58,14 @@
       "id": "excel",
       "name": "Excel Skill",
       "description": "Erstellt und bearbeitet Excel-Tabellen",
-      "keywords": ["excel", "tabelle", "spreadsheet", "xlsx", "daten", "data"],
+      "keywords": [
+        "excel",
+        "tabelle",
+        "spreadsheet",
+        "xlsx",
+        "daten",
+        "data"
+      ],
       "tools": [
         {
           "name": "create_excel_spreadsheet",
@@ -62,17 +83,25 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "name": { "type": "string", "description": "Sheet-Name" },
+                    "name": {
+                      "type": "string",
+                      "description": "Sheet-Name"
+                    },
                     "data": {
                       "type": "array",
                       "description": "2D-Array mit Daten",
-                      "items": { "type": "array" }
+                      "items": {
+                        "type": "array"
+                      }
                     }
                   }
                 }
               }
             },
-            "required": ["filename", "sheets"]
+            "required": [
+              "filename",
+              "sheets"
+            ]
           }
         },
         {
@@ -86,7 +115,9 @@
                 "description": "Vollständiger Pfad zur Excel-Datei"
               }
             },
-            "required": ["filepath"]
+            "required": [
+              "filepath"
+            ]
           }
         }
       ]
@@ -95,7 +126,16 @@
       "id": "brand-guidelines",
       "name": "Brand Guidelines Skill",
       "description": "Wendet Brand-Richtlinien auf Inhalte an",
-      "keywords": ["brand", "marke", "corporate design", "branding", "guidelines", "richtlinien", "farben", "logo"],
+      "keywords": [
+        "brand",
+        "marke",
+        "corporate design",
+        "branding",
+        "guidelines",
+        "richtlinien",
+        "farben",
+        "logo"
+      ],
       "tools": [
         {
           "name": "apply_brand_guidelines",
@@ -114,12 +154,18 @@
               },
               "output_format": {
                 "type": "string",
-                "enum": ["markdown", "html", "text"],
+                "enum": [
+                  "markdown",
+                  "html",
+                  "text"
+                ],
                 "description": "Ausgabeformat",
                 "default": "markdown"
               }
             },
-            "required": ["content"]
+            "required": [
+              "content"
+            ]
           }
         },
         {
@@ -142,7 +188,14 @@
       "id": "pdf",
       "name": "PDF Skill",
       "description": "Liest und verarbeitet PDF-Dateien mit OCR",
-      "keywords": ["pdf", "dokument", "lesen", "ocr", "scan", "text extraction"],
+      "keywords": [
+        "pdf",
+        "dokument",
+        "lesen",
+        "ocr",
+        "scan",
+        "text extraction"
+      ],
       "tools": [
         {
           "name": "read_pdf",
@@ -160,7 +213,9 @@
                 "default": "all"
               }
             },
-            "required": ["filepath"]
+            "required": [
+              "filepath"
+            ]
           }
         },
         {
@@ -179,7 +234,9 @@
                 "default": "deu"
               }
             },
-            "required": ["filepath"]
+            "required": [
+              "filepath"
+            ]
           }
         },
         {
@@ -193,7 +250,9 @@
                 "description": "Verzeichnispfad"
               }
             },
-            "required": ["directory"]
+            "required": [
+              "directory"
+            ]
           }
         }
       ]
@@ -202,7 +261,15 @@
       "id": "code-review",
       "name": "Code Review Skill",
       "description": "Führt Code-Reviews und Qualitätsprüfungen durch",
-      "keywords": ["code", "review", "quality", "lint", "static analysis", "bugs", "security"],
+      "keywords": [
+        "code",
+        "review",
+        "quality",
+        "lint",
+        "static analysis",
+        "bugs",
+        "security"
+      ],
       "tools": [
         {
           "name": "review_code",
@@ -222,13 +289,25 @@
                 "type": "array",
                 "items": {
                   "type": "string",
-                  "enum": ["security", "performance", "style", "bugs", "best-practices"]
+                  "enum": [
+                    "security",
+                    "performance",
+                    "style",
+                    "bugs",
+                    "best-practices"
+                  ]
                 },
                 "description": "Fokus der Review",
-                "default": ["bugs", "security"]
+                "default": [
+                  "bugs",
+                  "security"
+                ]
               }
             },
-            "required": ["code", "language"]
+            "required": [
+              "code",
+              "language"
+            ]
           }
         },
         {
@@ -246,7 +325,10 @@
                 "description": "Programmiersprache"
               }
             },
-            "required": ["code", "language"]
+            "required": [
+              "code",
+              "language"
+            ]
           }
         }
       ]
@@ -255,7 +337,15 @@
       "id": "blog-writer",
       "name": "Blog Writer Skill",
       "description": "Erstellt und optimiert Blog-Artikel und Content",
-      "keywords": ["blog", "artikel", "content", "seo", "writing", "text", "post"],
+      "keywords": [
+        "blog",
+        "artikel",
+        "content",
+        "seo",
+        "writing",
+        "text",
+        "post"
+      ],
       "tools": [
         {
           "name": "write_blog_post",
@@ -269,23 +359,36 @@
               },
               "keywords": {
                 "type": "array",
-                "items": { "type": "string" },
+                "items": {
+                  "type": "string"
+                },
                 "description": "SEO-Keywords"
               },
               "tone": {
                 "type": "string",
-                "enum": ["professional", "casual", "technical", "friendly"],
+                "enum": [
+                  "professional",
+                  "casual",
+                  "technical",
+                  "friendly"
+                ],
                 "description": "Tonalität des Artikels",
                 "default": "professional"
               },
               "length": {
                 "type": "string",
-                "enum": ["short", "medium", "long"],
+                "enum": [
+                  "short",
+                  "medium",
+                  "long"
+                ],
                 "description": "Länge des Artikels",
                 "default": "medium"
               }
             },
-            "required": ["topic"]
+            "required": [
+              "topic"
+            ]
           }
         },
         {
@@ -300,11 +403,118 @@
               },
               "target_keywords": {
                 "type": "array",
-                "items": { "type": "string" },
+                "items": {
+                  "type": "string"
+                },
                 "description": "Ziel-Keywords"
               }
             },
-            "required": ["content", "target_keywords"]
+            "required": [
+              "content",
+              "target_keywords"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "word",
+      "name": "Word Skill",
+      "description": "Erstellt und bearbeitet Word-Dokumente",
+      "keywords": [
+        "word",
+        "dokument",
+        "document",
+        "docx",
+        "text"
+      ],
+      "tools": [
+        {
+          "name": "create_word_document",
+          "description": "Erstellt ein neues Word-Dokument (.docx)",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "filename": {
+                "type": "string",
+                "description": "Name der Datei (z.B. 'dokument.docx')"
+              },
+              "title": {
+                "type": "string",
+                "description": "Titel des Dokuments"
+              },
+              "content": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "description": "Inhalt als Text"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Inhalt als Array von Absätzen"
+                  }
+                ],
+                "description": "Inhalt des Dokuments"
+              }
+            },
+            "required": [
+              "title",
+              "content"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "pdf-creator",
+      "name": "PDF Creator Skill",
+      "description": "Erstellt PDF-Dokumente",
+      "keywords": [
+        "pdf",
+        "dokument",
+        "erstellen",
+        "create",
+        "document"
+      ],
+      "tools": [
+        {
+          "name": "create_pdf_document",
+          "description": "Erstellt ein neues PDF-Dokument (.pdf)",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "filename": {
+                "type": "string",
+                "description": "Name der Datei (z.B. 'dokument.pdf')"
+              },
+              "title": {
+                "type": "string",
+                "description": "Titel des Dokuments"
+              },
+              "content": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "description": "Inhalt als Text"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Inhalt als Array von Absätzen"
+                  }
+                ],
+                "description": "Inhalt des Dokuments"
+              }
+            },
+            "required": [
+              "title",
+              "content"
+            ]
           }
         }
       ]

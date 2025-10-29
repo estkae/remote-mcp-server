@@ -1,10 +1,11 @@
 /**
  * Production Tools - Office Suite mit Download-Links
  *
- * PowerPoint, Excel, Word mit echten Download-URLs
+ * PowerPoint, Excel, Word, PDF mit echten Download-URLs
  */
 
 const { createPowerPoint: createPowerPointBase, createExcel: createExcelBase, createWord: createWordBase } = require('./production-tools-office');
+const { createPDF: createPDFBase } = require('./pdf-tool');
 const { generateDownloadToken } = require('./file-server');
 
 /**
@@ -52,6 +53,14 @@ async function createWord(parameters) {
 }
 
 /**
+ * PDF mit Download-Link
+ */
+async function createPDF(parameters) {
+  const result = await createPDFBase(parameters);
+  return addDownloadInfo(result, result.filepath);
+}
+
+/**
  * Tool-Executor mit Download-Links
  */
 async function executeOfficeTool(toolName, parameters) {
@@ -76,6 +85,11 @@ async function executeOfficeTool(toolName, parameters) {
         result = await createWord(parameters);
         break;
 
+      case 'create_pdf':
+      case 'create_pdf_document':
+        result = await createPDF(parameters);
+        break;
+
       default:
         throw new Error(`Unknown office tool: ${toolName}`);
     }
@@ -93,5 +107,6 @@ module.exports = {
   executeOfficeTool,
   createPowerPoint,
   createExcel,
-  createWord
+  createWord,
+  createPDF
 };
