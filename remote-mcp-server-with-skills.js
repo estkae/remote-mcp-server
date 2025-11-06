@@ -42,6 +42,16 @@ try {
   officeTools = null;
 }
 
+// Database Tools Integration
+let databaseTools;
+try {
+  databaseTools = require('./db-tools');
+  console.log('✅ Database Tools loaded (MSSQL, MySQL, PostgreSQL, Oracle, SQL Anywhere, Banana, TypeDB)');
+} catch (error) {
+  console.log('⚠️  Database Tools not available:', error.message);
+  databaseTools = null;
+}
+
 
 
 // Skill-Definitionen laden
@@ -303,27 +313,32 @@ app.get('/', (req, res) => {
   });
 });
 
-// GET /tools - Gibt Router + Office Tools + Kerio Tools zurück
+// GET /tools - Gibt Router + Office Tools + Kerio Tools + Database Tools zurück
 app.get('/tools', (req, res) => {
   const tools = [routerTool];
-  
+
   // Add Office tools from skill definitions
   const powerpoint = skillDefinitions.skills.find(s => s.id === 'powerpoint')?.tools[0];
   const excel = skillDefinitions.skills.find(s => s.id === 'excel')?.tools[0];
   const word = skillDefinitions.skills.find(s => s.id === 'word')?.tools[0];
   const pdf = skillDefinitions.skills.find(s => s.id === 'pdf-creator')?.tools[0];
-  
+
   if (powerpoint) tools.push(powerpoint);
   if (excel) tools.push(excel);
   if (word) tools.push(word);
   if (pdf) tools.push(pdf);
-  
+
   // Add Kerio tools if configured
   if (kerioConnector && kerioConnector.isKerioConfigured()) {
     tools.push(...kerioConnector.KERIO_TOOLS);
   }
-  
-  console.log(`📋 /tools - Returning ${tools.length} tools (Router + Office + Kerio)`);
+
+  // Add Database tools if available
+  if (databaseTools) {
+    tools.push(...databaseTools.DATABASE_TOOLS);
+  }
+
+  console.log(`📋 /tools - Returning ${tools.length} tools (Router + Office + Kerio + Database)`);
   res.json(tools);
 });
 
@@ -432,7 +447,7 @@ app.post('/execute', async (req, res) => {
       if (!kerioConnector || !kerioConnector.isKerioConfigured()) {
         throw new Error('Kerio Connect not configured. Set KERIO_HOST, KERIO_USERNAME, KERIO_PASSWORD');
       }
-      
+
       switch(tool) {
         case 'kerio_list_emails':
           result = await kerioConnector.listEmails(parameters || {});
@@ -449,6 +464,14 @@ app.post('/execute', async (req, res) => {
         default:
           throw new Error('Unknown Kerio tool: ' + tool);
       }
+    } else if (databaseTools && [
+      'connect_database', 'disconnect_database', 'execute_query', 'list_tables',
+      'describe_table', 'list_active_connections', 'disconnect_all_databases',
+      'save_connection_config', 'load_connection_config', 'list_connection_configs',
+      'delete_connection_config', 'test_database_connection', 'export_query_results'
+    ].includes(tool)) {
+      // Database Tools
+      result = await databaseTools.handleDatabaseTool(tool, parameters);
     } else {
       // Simuliere Tool-Ausführung (in Produktion: delegiere an spezialisierte Services)
       result = await simulateToolExecution(tool, parameters);

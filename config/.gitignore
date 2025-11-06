@@ -1,0 +1,5 @@
+# Ignore database connection configs (may contain passwords)
+db-connections.json
+
+# Allow .gitignore itself
+!.gitignore
