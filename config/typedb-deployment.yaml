@@ -1,0 +1,63 @@
+# DigitalOcean App Platform Deployment Config für TypeDB
+#
+# Deployment:
+# doctl apps create --spec config/typedb-deployment.yaml
+#
+# Update:
+# doctl apps update YOUR_APP_ID --spec config/typedb-deployment.yaml
+
+name: typedb-server
+region: fra  # Frankfurt
+
+services:
+  - name: typedb
+    # TypeDB Docker Image
+    image:
+      registry_type: DOCKER_HUB
+      repository: vaticle/typedb
+      tag: "3.0.0"
+
+    # Port Configuration
+    http_port: 1729
+    internal_ports:
+      - 1729
+
+    # Health Check
+    health_check:
+      http_path: /
+      initial_delay_seconds: 30
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+
+    # Resources
+    instance_count: 1
+    instance_size_slug: professional-xs  # 1 vCPU, 1 GB RAM
+    # Für Production: professional-s (2 vCPU, 2 GB RAM)
+
+    # Environment Variables
+    envs:
+      - key: TYPEDB_SERVER_ADDRESS
+        value: "0.0.0.0:1729"
+      - key: TYPEDB_DATA_DIR
+        value: "/opt/typedb/server/data"
+      - key: TYPEDB_LOG_DIR
+        value: "/opt/typedb/server/logs"
+
+    # Persistent Storage für Datenbank
+    volumes:
+      - name: typedb-data
+        mount_path: /opt/typedb/server/data
+        size_gb: 10  # 10 GB für Daten
+      - name: typedb-logs
+        mount_path: /opt/typedb/server/logs
+        size_gb: 2   # 2 GB für Logs
+
+    # Commands
+    run_command: "/opt/typedb/server/typedb server"
+
+# Kosten-Schätzung:
+# - professional-xs: ~$12/Monat
+# - Storage (12 GB): ~$1.20/Monat
+# - Total: ~$13-15/Monat

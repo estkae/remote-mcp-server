@@ -1,0 +1,32 @@
+# TypeDB Server Dockerfile für DigitalOcean
+# Alternative zu App Platform Deployment
+#
+# Build: docker build -f config/Dockerfile.typedb -t typedb-server:latest .
+# Run: docker run -p 1729:1729 -v typedb-data:/opt/typedb/server/data typedb-server:latest
+
+FROM vaticle/typedb:3.0.0
+
+# Maintainer
+LABEL maintainer="AALS Software AG"
+LABEL description="TypeDB Server for Autonomous Meeting System"
+
+# Environment Variables
+ENV TYPEDB_SERVER_ADDRESS=0.0.0.0:1729
+ENV TYPEDB_DATA_DIR=/opt/typedb/server/data
+ENV TYPEDB_LOG_DIR=/opt/typedb/server/logs
+
+# Create directories
+RUN mkdir -p ${TYPEDB_DATA_DIR} ${TYPEDB_LOG_DIR}
+
+# Expose Port
+EXPOSE 1729
+
+# Volume für persistente Daten
+VOLUME ["${TYPEDB_DATA_DIR}", "${TYPEDB_LOG_DIR}"]
+
+# Health Check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:1729/ || exit 1
+
+# Start TypeDB Server
+CMD ["/opt/typedb/server/typedb", "server"]
