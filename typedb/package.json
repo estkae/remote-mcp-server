@@ -1,0 +1,18 @@
+{
+  "name": "meeting-knowledge-typedb",
+  "version": "1.0.0",
+  "description": "TypeDB Client für Autonomes Meeting System",
+  "main": "typedb-client.ts",
+  "scripts": {
+    "test": "ts-node test-connection.ts",
+    "example": "ts-node -e \"import('./typedb-client').then(m => m.example())\""
+  },
+  "dependencies": {
+    "typedb-driver": "^2.28.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  }
+}

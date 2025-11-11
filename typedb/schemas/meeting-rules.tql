@@ -1,0 +1,93 @@
+define
+
+# ============================================
+# TypeDB Functions für Autonomes Meeting System
+# Version: 2.0 (TypeDB 3.5.6)
+# Datum: 2025-11-11
+# ============================================
+# WICHTIG: TypeDB 3.5.6 verwendet Functions statt Rules
+# Functions müssen explizit in Queries aufgerufen werden
+# Sie führen KEINE automatische Inferenz durch!
+
+# --------------------------------------------
+# Meeting Status Functions
+# --------------------------------------------
+
+# Function 1: Prüft ob Meeting bereit ist (alle bestätigt)
+# Verwendung: $ready_meetings in meetings_ready_for_start();
+fun meetings_ready_for_start() -> {meeting}:
+    match {
+        $m isa meeting, has status "scheduled";
+        not {
+            (meeting: $m, participant: $p) isa meeting-participation,
+                has attendance-status $s;
+            $s != "confirmed";
+        };
+    };
+    return { $m };
+
+# Function 2: Findet abgeschlossene Meetings (Protokoll genehmigt)
+# Verwendung: $completed in meetings_completed();
+fun meetings_completed() -> {meeting}:
+    match {
+        $m isa meeting, has status "in-progress";
+        (meeting: $m, protocol: $p) isa meeting-protocol;
+        $p has approved true;
+    };
+    return { $m };
+
+# --------------------------------------------
+# Agenda Item Functions
+# --------------------------------------------
+
+# Function 3: Findet hochpriorisierte Items ohne Dokumente
+# Verwendung: $missing_docs in agenda_items_missing_documents();
+fun agenda_items_missing_documents() -> {agenda-item}:
+    match {
+        $ai isa agenda-item, has priority $p;
+        $p > 8;
+        (meeting: $m, item: $ai) isa meeting-agenda;
+        not {
+            (agenda: $ai, document: $doc) isa agenda-document-link;
+        };
+    };
+    return { $ai };
+
+# --------------------------------------------
+# Protocol Functions
+# --------------------------------------------
+
+# Function 4: Findet Protokolle die Freigabe brauchen
+# Verwendung: $awaiting in protocols_awaiting_approval();
+fun protocols_awaiting_approval() -> {protocol}:
+    match {
+        $p isa protocol, has approved $appr;
+        $appr == false;
+        (meeting: $m, protocol: $p) isa meeting-protocol;
+        (meeting: $m, transcription: $t) isa recording-link;
+    };
+    return { $p };
+
+# --------------------------------------------
+# Additional Business Logic Functions
+# --------------------------------------------
+
+# Function 5: Findet Meetings ohne Agenda-Items
+# Verwendung: $incomplete in meetings_without_agenda();
+fun meetings_without_agenda() -> {meeting}:
+    match {
+        $m isa meeting, has status "scheduled";
+        not {
+            (meeting: $m, item: $ai) isa meeting-agenda;
+        };
+    };
+    return { $m };
+
+# Function 6: Findet Agenda-Items mit Beschlüssen
+# Verwendung: $decided in agenda_items_with_decisions();
+fun agenda_items_with_decisions() -> {agenda-item}:
+    match {
+        $ai isa agenda-item;
+        (agenda: $ai, decision: $d) isa agenda-decision;
+    };
+    return { $ai };

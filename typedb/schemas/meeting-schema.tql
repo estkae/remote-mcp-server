@@ -1,339 +1,315 @@
-##
-## TypeDB Schema für Autonomes Meeting System
-## Version: 1.0
-## Datum: 2025-11-07
-##
-
 define
 
-# ==================== ENTITIES ====================
+# ============================================
+# TypeDB Schema für Autonomes Meeting System
+# Version: 1.0 (TypeDB 3.x)
+# Datum: 2025-11-07
+# ============================================
 
-## Meeting - Hauptentität für Sitzungen
-meeting sub entity,
-  owns meeting-id @key,
-  owns meeting-date,
-  owns meeting-time,
-  owns meeting-location,
-  owns meeting-type,
-  owns status,
-  owns created-at,
-  owns updated-at,
-  owns created-by,
-  plays meeting-participation:meeting,
-  plays meeting-agenda:meeting,
-  plays meeting-protocol:meeting,
-  plays document-link:meeting,
-  plays recording-link:meeting;
+# --------------------------------------------
+# Attributes
+# --------------------------------------------
 
-## Person - Teilnehmer, Organisatoren, etc.
-person sub entity,
-  owns person-id @key,
-  owns name,
-  owns email,
-  owns phone,
-  owns role,
-  owns department,
-  plays meeting-participation:participant,
-  plays discussion:speaker;
+# Meeting Attributes
+attribute meeting-id, value string;
+attribute meeting-date, value datetime;
+attribute meeting-time, value string;
+attribute meeting-location, value string;
+attribute meeting-type, value string;
+attribute status, value string;
 
-## Agenda Item - Tagesordnungspunkte
-agenda-item sub entity,
-  owns item-id @key,
-  owns topic,
-  owns description,
-  owns priority,
-  owns duration-minutes,
-  owns order-index,
-  owns status,
-  plays meeting-agenda:item,
-  plays agenda-document-link:agenda,
-  plays discussion:topic-discussed;
+# Person Attributes
+attribute person-id, value string;
+attribute name, value string;
+attribute email, value string;
+attribute phone, value string;
+attribute person-role, value string;
+attribute department, value string;
 
-## Document - Dokumente aus OneDrive
-document sub entity,
-  owns doc-id @key,
-  owns onedrive-path,
-  owns onedrive-id,
-  owns filename,
-  owns doc-type,
-  owns file-size,
-  owns version,
-  owns uploaded-at,
-  owns last-modified,
-  plays agenda-document-link:document,
-  plays document-link:document,
-  plays document-version:current,
-  plays document-version:previous;
+# Agenda Item Attributes
+attribute item-id, value string;
+attribute topic, value string;
+attribute description, value string;
+attribute priority, value double;
+attribute duration-minutes, value double;
+attribute order-index, value double;
 
-## Protocol - Sitzungsprotokolle
-protocol sub entity,
-  owns protocol-id @key,
-  owns content-markdown,
-  owns content-html,
-  owns content-pdf-path,
-  owns template-id,
-  owns created-at,
-  owns created-by,
-  owns approved,
-  owns approved-by,
-  owns approved-at,
-  plays meeting-protocol:protocol;
+# Document Attributes
+attribute doc-id, value string;
+attribute onedrive-path, value string;
+attribute onedrive-id, value string;
+attribute filename, value string;
+attribute doc-type, value string;
+attribute file-size, value double;
+attribute version, value string;
+attribute version-number, value double;
 
-## Protocol Template - Vorlagen für Protokolle
-protocol-template sub entity,
-  owns template-id @key,
-  owns template-name,
-  owns template-content,
-  owns meeting-type,
-  owns is-default,
-  owns created-at,
-  owns updated-at;
+# Protocol Attributes
+attribute protocol-id, value string;
+attribute content-markdown, value string;
+attribute content-html, value string;
+attribute content-pdf-path, value string;
+attribute template-id, value string;
+attribute template-name, value string;
+attribute template-content, value string;
 
-## Audio Recording - Aufnahmen von Sitzungen
-audio-recording sub entity,
-  owns recording-id @key,
-  owns file-path,
-  owns duration-seconds,
-  owns recorded-at,
-  owns transcription-status,
-  plays recording-link:recording;
+# Recording Attributes
+attribute recording-id, value string;
+attribute file-path, value string;
+attribute duration-seconds, value double;
+attribute transcription-status, value string;
 
-## Transcription - Transkriptionen von Aufnahmen
-transcription sub entity,
-  owns transcription-id @key,
-  owns full-text,
-  owns segments-json,
-  owns language,
-  owns created-at,
-  plays recording-link:transcription,
-  plays discussion:transcription-source;
+# Transcription Attributes
+attribute transcription-id, value string;
+attribute full-text, value string;
+attribute segments-json, value string;
+attribute language, value string;
 
-## Intent Analysis - Gespeicherte Intent-Analysen für Lernen
-intent-analysis sub entity,
-  owns analysis-id @key,
-  owns prompt,
-  owns detected-intent,
-  owns confidence,
-  owns entities-json,
-  owns timestamp,
-  owns user-feedback,
-  owns corrected-intent,
-  owns user-id;
+# Intent Analysis Attributes
+attribute analysis-id, value string;
+attribute prompt, value string;
+attribute detected-intent, value string;
+attribute confidence, value double;
+attribute entities-json, value string;
+attribute user-feedback, value string;
+attribute corrected-intent, value string;
+attribute user-id, value string;
 
-## Decision - Beschlüsse in Sitzungen
-decision sub entity,
-  owns decision-id @key,
-  owns decision-text,
-  owns decision-type,
-  owns voting-result,
-  owns voting-details,
-  owns created-at,
-  plays agenda-decision:decision;
+# Decision Attributes
+attribute decision-id, value string;
+attribute decision-text, value string;
+attribute decision-type, value string;
+attribute voting-result, value string;
+attribute voting-details, value string;
 
-# ==================== RELATIONS ====================
+# Timestamp Attributes
+attribute created-at, value datetime;
+attribute updated-at, value datetime;
+attribute uploaded-at, value datetime;
+attribute recorded-at, value datetime;
+attribute changed-at, value datetime;
+attribute timestamp, value double;
+attribute invited-at, value datetime;
+attribute response-at, value datetime;
+attribute approved-at, value datetime;
+attribute linked-at, value datetime;
+attribute last-modified, value datetime;
 
-## Meeting Participation - Wer nimmt an welcher Sitzung teil
-meeting-participation sub relation,
-  relates meeting,
-  relates participant,
-  owns attendance-status,
-  owns role-in-meeting,
-  owns invited-at,
-  owns response-at;
+# Other Attributes
+attribute created-by, value string;
+attribute approved, value boolean;
+attribute approved-by, value string;
+attribute is-default, value boolean;
+attribute attendance-status, value string;
+attribute role-in-meeting, value string;
+attribute statement-text, value string;
+attribute timestamp-in-recording, value double;
+attribute sentiment, value string;
+attribute change-description, value string;
 
-## Meeting Agenda - Tagesordnung einer Sitzung
-meeting-agenda sub relation,
-  relates meeting,
-  relates item;
+# --------------------------------------------
+# Entities
+# --------------------------------------------
 
-## Agenda Document Link - Dokumente zu Tagesordnungspunkten
-agenda-document-link sub relation,
-  relates agenda,
-  relates document,
-  owns linked-at;
+# Meeting - Hauptentität für Sitzungen
+entity meeting,
+    owns meeting-id @key,
+    owns meeting-date,
+    owns meeting-time,
+    owns meeting-location,
+    owns meeting-type,
+    owns status,
+    owns created-at,
+    owns updated-at,
+    owns created-by;
 
-## Document Link - Allgemeine Dokumente zu Sitzung
-document-link sub relation,
-  relates meeting,
-  relates document;
+# Person - Teilnehmer, Organisatoren, etc.
+entity person,
+    owns person-id @key,
+    owns name,
+    owns email,
+    owns phone,
+    owns person-role,
+    owns department;
 
-## Meeting Protocol - Protokoll einer Sitzung
-meeting-protocol sub relation,
-  relates meeting,
-  relates protocol;
+# Agenda Item - Tagesordnungspunkte
+entity agenda-item,
+    owns item-id @key,
+    owns topic,
+    owns description,
+    owns priority,
+    owns duration-minutes,
+    owns order-index,
+    owns status;
 
-## Recording Link - Verknüpfung von Aufnahme, Sitzung und Transkription
-recording-link sub relation,
-  relates meeting,
-  relates recording,
-  relates transcription;
+# Document - Dokumente aus OneDrive
+entity document,
+    owns doc-id @key,
+    owns onedrive-path,
+    owns onedrive-id,
+    owns filename,
+    owns doc-type,
+    owns file-size,
+    owns version,
+    owns uploaded-at,
+    owns last-modified;
 
-## Document Version - Versionierung von Dokumenten
-document-version sub relation,
-  relates current,
-  relates previous,
-  owns version-number,
-  owns changed-at,
-  owns change-description;
+# Protocol - Sitzungsprotokolle
+entity protocol,
+    owns protocol-id @key,
+    owns content-markdown,
+    owns content-html,
+    owns content-pdf-path,
+    owns template-id,
+    owns created-at,
+    owns created-by,
+    owns approved,
+    owns approved-by,
+    owns approved-at;
 
-## Discussion - Diskussionen zu Tagesordnungspunkten
-discussion sub relation,
-  relates topic-discussed,
-  relates speaker,
-  relates transcription-source,
-  owns statement-text,
-  owns timestamp-in-recording,
-  owns sentiment;
+# Protocol Template - Vorlagen für Protokolle
+entity protocol-template,
+    owns template-id @key,
+    owns template-name,
+    owns template-content,
+    owns meeting-type,
+    owns is-default,
+    owns created-at,
+    owns updated-at;
 
-## Agenda Decision - Beschlüsse zu Tagesordnungspunkten
-agenda-decision sub relation,
-  relates agenda,
-  relates decision;
+# Audio Recording - Aufnahmen von Sitzungen
+entity audio-recording,
+    owns recording-id @key,
+    owns file-path,
+    owns duration-seconds,
+    owns recorded-at,
+    owns transcription-status;
 
-# ==================== ATTRIBUTES ====================
+# Transcription - Transkriptionen von Aufnahmen
+entity transcription,
+    owns transcription-id @key,
+    owns full-text,
+    owns segments-json,
+    owns language,
+    owns created-at;
 
-## Meeting Attributes
-meeting-id sub attribute, value string;
-meeting-date sub attribute, value datetime;
-meeting-time sub attribute, value string;
-meeting-location sub attribute, value string;
-meeting-type sub attribute, value string;
-status sub attribute, value string;
+# Intent Analysis - Gespeicherte Intent-Analysen für Lernen
+entity intent-analysis,
+    owns analysis-id @key,
+    owns prompt,
+    owns detected-intent,
+    owns confidence,
+    owns entities-json,
+    owns timestamp,
+    owns user-feedback,
+    owns corrected-intent,
+    owns user-id;
 
-## Person Attributes
-person-id sub attribute, value string;
-name sub attribute, value string;
-email sub attribute, value string;
-phone sub attribute, value string;
-role sub attribute, value string;
-department sub attribute, value string;
+# Decision - Beschlüsse in Sitzungen
+entity decision,
+    owns decision-id @key,
+    owns decision-text,
+    owns decision-type,
+    owns voting-result,
+    owns voting-details,
+    owns created-at;
 
-## Agenda Item Attributes
-item-id sub attribute, value string;
-topic sub attribute, value string;
-description sub attribute, value string;
-priority sub attribute, value long;
-duration-minutes sub attribute, value long;
-order-index sub attribute, value long;
+# --------------------------------------------
+# Relations
+# --------------------------------------------
 
-## Document Attributes
-doc-id sub attribute, value string;
-onedrive-path sub attribute, value string;
-onedrive-id sub attribute, value string;
-filename sub attribute, value string;
-doc-type sub attribute, value string;
-file-size sub attribute, value long;
-version sub attribute, value string;
-version-number sub attribute, value long;
+# Meeting Participation - Wer nimmt an welcher Sitzung teil
+relation meeting-participation,
+    owns attendance-status,
+    owns role-in-meeting,
+    owns invited-at,
+    owns response-at,
+    relates meeting,
+    relates participant;
 
-## Protocol Attributes
-protocol-id sub attribute, value string;
-content-markdown sub attribute, value string;
-content-html sub attribute, value string;
-content-pdf-path sub attribute, value string;
-template-id sub attribute, value string;
-template-name sub attribute, value string;
-template-content sub attribute, value string;
+# Meeting Agenda - Tagesordnung einer Sitzung
+relation meeting-agenda,
+    relates meeting,
+    relates item;
 
-## Recording Attributes
-recording-id sub attribute, value string;
-file-path sub attribute, value string;
-duration-seconds sub attribute, value long;
-transcription-status sub attribute, value string;
+# Agenda Document Link - Dokumente zu Tagesordnungspunkten
+relation agenda-document-link,
+    owns linked-at,
+    relates agenda,
+    relates document;
 
-## Transcription Attributes
-transcription-id sub attribute, value string;
-full-text sub attribute, value string;
-segments-json sub attribute, value string;
-language sub attribute, value string;
+# Document Link - Allgemeine Dokumente zu Sitzung
+relation document-link,
+    relates meeting,
+    relates document;
 
-## Intent Analysis Attributes
-analysis-id sub attribute, value string;
-prompt sub attribute, value string;
-detected-intent sub attribute, value string;
-confidence sub attribute, value double;
-entities-json sub attribute, value string;
-user-feedback sub attribute, value string;
-corrected-intent sub attribute, value string;
-user-id sub attribute, value string;
+# Meeting Protocol - Protokoll einer Sitzung
+relation meeting-protocol,
+    relates meeting,
+    relates protocol;
 
-## Decision Attributes
-decision-id sub attribute, value string;
-decision-text sub attribute, value string;
-decision-type sub attribute, value string;
-voting-result sub attribute, value string;
-voting-details sub attribute, value string;
+# Recording Link - Verknüpfung von Aufnahme, Sitzung und Transkription
+relation recording-link,
+    relates meeting,
+    relates recording,
+    relates transcription;
 
-## Timestamp Attributes
-created-at sub attribute, value datetime;
-updated-at sub attribute, value datetime;
-uploaded-at sub attribute, value datetime;
-recorded-at sub attribute, value datetime;
-changed-at sub attribute, value datetime;
-timestamp sub attribute, value long;
-invited-at sub attribute, value datetime;
-response-at sub attribute, value datetime;
-approved-at sub attribute, value datetime;
-linked-at sub attribute, value datetime;
-last-modified sub attribute, value datetime;
+# Document Version - Versionierung von Dokumenten
+relation document-version,
+    owns version-number,
+    owns changed-at,
+    owns change-description,
+    relates current,
+    relates previous;
 
-## Other Attributes
-created-by sub attribute, value string;
-approved sub attribute, value boolean;
-approved-by sub attribute, value string;
-is-default sub attribute, value boolean;
-attendance-status sub attribute, value string;
-role-in-meeting sub attribute, value string;
-statement-text sub attribute, value string;
-timestamp-in-recording sub attribute, value double;
-sentiment sub attribute, value string;
-change-description sub attribute, value string;
+# Discussion - Diskussionen zu Tagesordnungspunkten
+relation discussion,
+    owns statement-text,
+    owns timestamp-in-recording,
+    owns sentiment,
+    relates topic-discussed,
+    relates speaker,
+    relates transcription-source;
 
-# ==================== RULES (Inferenz-Regeln) ====================
+# Agenda Decision - Beschlüsse zu Tagesordnungspunkten
+relation agenda-decision,
+    relates agenda,
+    relates decision;
 
-## Regel 1: Meeting ist "ready" wenn alle Teilnehmer bestätigt haben
-rule meeting-ready-when-all-confirmed:
-  when {
-    $m isa meeting, has status "scheduled";
-    not {
-      (meeting: $m, participant: $p) isa meeting-participation,
-        has attendance-status $status;
-      $status != "confirmed";
-    };
-  } then {
-    $m has status "ready";
-  };
+# --------------------------------------------
+# Role Players
+# --------------------------------------------
 
-## Regel 2: Hohe Priorität (>8) erfordert Dokumente
-rule high-priority-requires-documents:
-  when {
-    $ai isa agenda-item, has priority $p;
-    $p > 8;
-    (meeting: $m, item: $ai) isa meeting-agenda;
-    not {
-      (agenda: $ai, document: $doc) isa agenda-document-link;
-    };
-  } then {
-    $ai has status "documents-missing";
-  };
+meeting plays meeting-participation:meeting;
+meeting plays meeting-agenda:meeting;
+meeting plays meeting-protocol:meeting;
+meeting plays document-link:meeting;
+meeting plays recording-link:meeting;
 
-## Regel 3: Protokoll muss genehmigt werden wenn Transkription vorhanden
-rule protocol-needs-approval:
-  when {
-    $p isa protocol, has approved $appr;
-    $appr == false;
-    (meeting: $m, protocol: $p) isa meeting-protocol;
-    (meeting: $m, transcription: $t) isa recording-link;
-  } then {
-    $p has status "awaiting-approval";
-  };
+person plays meeting-participation:participant;
+person plays discussion:speaker;
 
-## Regel 4: Meeting abgeschlossen wenn Protokoll genehmigt
-rule meeting-completed-when-protocol-approved:
-  when {
-    $m isa meeting, has status "in-progress";
-    (meeting: $m, protocol: $p) isa meeting-protocol;
-    $p has approved true;
-  } then {
-    $m has status "completed";
-  };
+agenda-item plays meeting-agenda:item;
+agenda-item plays agenda-document-link:agenda;
+agenda-item plays discussion:topic-discussed;
+agenda-item plays agenda-decision:agenda;
+
+document plays agenda-document-link:document;
+document plays document-link:document;
+document plays document-version:current;
+document plays document-version:previous;
+
+protocol plays meeting-protocol:protocol;
+
+audio-recording plays recording-link:recording;
+
+transcription plays recording-link:transcription;
+transcription plays discussion:transcription-source;
+
+decision plays agenda-decision:decision;
+
+# --------------------------------------------
+# Rules (TypeDB 3.x syntax)
+# --------------------------------------------
+# Note: Rules removed - may need to be loaded separately
+# or your TypeDB version may not support inference rules
