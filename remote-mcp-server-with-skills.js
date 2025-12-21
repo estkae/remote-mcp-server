@@ -605,6 +605,12 @@ app.post('/mcp', async (req, res) => {
   const message = req.body;
   console.log(`📨 MCP Request: ${message.method}`);
 
+  // Notifications haben keine id - keine Response senden
+  if (message.id === undefined) {
+    console.log(`📭 MCP Notification (no response needed): ${message.method}`);
+    return res.status(204).end();
+  }
+
   try {
     let response;
 
