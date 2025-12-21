@@ -599,6 +599,182 @@ app.get('/health', (req, res) => {
   });
 });
 
+// ==================== MCP PROTOCOL ENDPOINT ====================
+// POST /mcp - MCP Protocol Handler für Claude Desktop Integration
+app.post('/mcp', async (req, res) => {
+  const message = req.body;
+  console.log(`📨 MCP Request: ${message.method}`);
+
+  try {
+    let response;
+
+    switch (message.method) {
+      case 'initialize':
+        // MCP Initialize - Server-Info zurückgeben
+        response = {
+          jsonrpc: '2.0',
+          id: message.id,
+          result: {
+            protocolVersion: '2024-11-05',
+            capabilities: {
+              tools: { listChanged: false }
+            },
+            serverInfo: {
+              name: 'remote-mcp-server',
+              version: '2.1.0'
+            }
+          }
+        };
+        break;
+
+      case 'initialized':
+        // Client hat initialisiert - keine Antwort nötig
+        response = { jsonrpc: '2.0', id: message.id, result: {} };
+        break;
+
+      case 'tools/list':
+        // Liste alle Tools auf
+        const allTools = [routerTool];
+
+        // Add Office tools
+        const ppt = skillDefinitions.skills.find(s => s.id === 'powerpoint')?.tools[0];
+        const xls = skillDefinitions.skills.find(s => s.id === 'excel')?.tools[0];
+        const doc = skillDefinitions.skills.find(s => s.id === 'word')?.tools[0];
+        const pdfTool = skillDefinitions.skills.find(s => s.id === 'pdf-creator')?.tools[0];
+
+        if (ppt) allTools.push(ppt);
+        if (xls) allTools.push(xls);
+        if (doc) allTools.push(doc);
+        if (pdfTool) allTools.push(pdfTool);
+
+        // Add Kerio tools
+        if (kerioConnector && kerioConnector.isKerioConfigured()) {
+          allTools.push(...kerioConnector.KERIO_TOOLS);
+        }
+
+        // Add Database tools
+        if (databaseTools) {
+          allTools.push(...databaseTools.DATABASE_TOOLS);
+        }
+
+        response = {
+          jsonrpc: '2.0',
+          id: message.id,
+          result: {
+            tools: allTools.map(tool => ({
+              name: tool.name,
+              description: tool.description,
+              inputSchema: tool.input_schema
+            }))
+          }
+        };
+        break;
+
+      case 'tools/call':
+        // Tool ausführen
+        const toolName = message.params.name;
+        const toolArgs = message.params.arguments || {};
+
+        console.log(`🔧 MCP Tool Call: ${toolName}`);
+
+        let toolResult;
+
+        if (toolName === 'skill_router') {
+          toolResult = selectSkills(toolArgs.user_request, toolArgs.context);
+        } else if (['create_powerpoint', 'create_powerpoint_presentation'].includes(toolName)) {
+          if (officeTools) {
+            toolResult = await officeTools.createPowerPoint(toolArgs);
+          } else {
+            throw new Error('Office Tools not available');
+          }
+        } else if (['create_excel', 'create_excel_spreadsheet'].includes(toolName)) {
+          if (officeTools) {
+            toolResult = await officeTools.createExcel(toolArgs);
+          } else {
+            throw new Error('Office Tools not available');
+          }
+        } else if (['create_word', 'create_word_document'].includes(toolName)) {
+          if (officeTools) {
+            toolResult = await officeTools.createWord(toolArgs);
+          } else {
+            throw new Error('Office Tools not available');
+          }
+        } else if (['create_pdf', 'create_pdf_document'].includes(toolName)) {
+          if (officeTools) {
+            toolResult = await officeTools.createPDF(toolArgs);
+          } else {
+            throw new Error('Office Tools not available');
+          }
+        } else if (toolName.startsWith('kerio_')) {
+          if (!kerioConnector || !kerioConnector.isKerioConfigured()) {
+            throw new Error('Kerio Connect not configured');
+          }
+          switch(toolName) {
+            case 'kerio_list_emails':
+              toolResult = await kerioConnector.listEmails(toolArgs);
+              break;
+            case 'kerio_read_email':
+              toolResult = await kerioConnector.readEmail(toolArgs);
+              break;
+            case 'kerio_send_email':
+              toolResult = await kerioConnector.sendEmail(toolArgs);
+              break;
+            case 'kerio_search_emails':
+              toolResult = await kerioConnector.searchEmails(toolArgs);
+              break;
+            default:
+              throw new Error('Unknown Kerio tool: ' + toolName);
+          }
+        } else if (databaseTools && [
+          'connect_database', 'disconnect_database', 'execute_query', 'list_tables',
+          'describe_table', 'list_active_connections', 'disconnect_all_databases',
+          'save_connection_config', 'load_connection_config', 'list_connection_configs',
+          'delete_connection_config', 'test_database_connection', 'export_query_results'
+        ].includes(toolName)) {
+          toolResult = await databaseTools.handleDatabaseTool(toolName, toolArgs);
+        } else {
+          toolResult = await simulateToolExecution(toolName, toolArgs);
+        }
+
+        response = {
+          jsonrpc: '2.0',
+          id: message.id,
+          result: {
+            content: [{
+              type: 'text',
+              text: JSON.stringify(toolResult, null, 2)
+            }]
+          }
+        };
+        break;
+
+      default:
+        console.log(`⚠️ Unknown MCP method: ${message.method}`);
+        response = {
+          jsonrpc: '2.0',
+          id: message.id,
+          error: {
+            code: -32601,
+            message: `Method not found: ${message.method}`
+          }
+        };
+    }
+
+    console.log(`📤 MCP Response: ${JSON.stringify(response).substring(0, 100)}...`);
+    res.json(response);
+  } catch (error) {
+    console.error(`❌ MCP Error:`, error);
+    res.json({
+      jsonrpc: '2.0',
+      id: message.id,
+      error: {
+        code: -32603,
+        message: error.message
+      }
+    });
+  }
+});
+
 // Backward compatibility: Domain checker (falls vorhanden)
 app.post('/check-domain', async (req, res) => {
   const { domain, tlds } = req.body;
