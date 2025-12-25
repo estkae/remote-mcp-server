@@ -599,6 +599,70 @@ app.get('/health', (req, res) => {
   });
 });
 
+// GET /kerio-status - Kerio Configuration Status (Debug Endpoint)
+app.get('/kerio-status', (req, res) => {
+  const status = {
+    module_loaded: !!kerioConnector,
+    configured: false,
+    config: {
+      host: 'N/A',
+      username: 'N/A',
+      imap_port: 'N/A',
+      smtp_port: 'N/A',
+      use_ssl: 'N/A'
+    }
+  };
+
+  if (kerioConnector) {
+    status.configured = kerioConnector.isKerioConfigured();
+    status.config = {
+      host: kerioConnector.KERIO_CONFIG?.host || 'NOT SET',
+      username: kerioConnector.KERIO_CONFIG?.username || 'NOT SET',
+      password_set: !!kerioConnector.KERIO_CONFIG?.password,
+      imap_port: kerioConnector.KERIO_CONFIG?.imapPort || 993,
+      smtp_port: kerioConnector.KERIO_CONFIG?.smtpPort || 465,
+      use_ssl: kerioConnector.KERIO_CONFIG?.useSsl
+    };
+  }
+
+  res.json(status);
+});
+
+// GET /kerio-test - Test Kerio Connection
+app.get('/kerio-test', async (req, res) => {
+  if (!kerioConnector) {
+    return res.json({ error: 'Kerio module not loaded' });
+  }
+
+  if (!kerioConnector.isKerioConfigured()) {
+    return res.json({
+      error: 'Kerio not configured',
+      config: {
+        host: kerioConnector.KERIO_CONFIG?.host || 'NOT SET',
+        username: kerioConnector.KERIO_CONFIG?.username || 'NOT SET',
+        password_set: !!kerioConnector.KERIO_CONFIG?.password
+      }
+    });
+  }
+
+  try {
+    console.log('🧪 Testing Kerio connection...');
+    const result = await kerioConnector.listEmails({ limit: 1 });
+    res.json({
+      success: true,
+      message: 'Kerio connection successful',
+      test_result: result
+    });
+  } catch (error) {
+    console.error('🧪 Kerio test failed:', error);
+    res.json({
+      success: false,
+      error: error.message,
+      stack: error.stack
+    });
+  }
+});
+
 // ==================== MCP PROTOCOL ENDPOINT ====================
 // POST /mcp - MCP Protocol Handler für Claude Desktop Integration
 app.post('/mcp', async (req, res) => {
@@ -712,12 +776,26 @@ app.post('/mcp', async (req, res) => {
             throw new Error('Office Tools not available');
           }
         } else if (toolName.startsWith('kerio_')) {
-          if (!kerioConnector || !kerioConnector.isKerioConfigured()) {
-            throw new Error('Kerio Connect not configured');
+          console.log(`📧 Kerio Tool Call: ${toolName}`);
+          console.log(`📧 Kerio Connector available: ${!!kerioConnector}`);
+
+          if (!kerioConnector) {
+            throw new Error('Kerio Connect module not loaded');
           }
+
+          const isConfigured = kerioConnector.isKerioConfigured();
+          console.log(`📧 Kerio configured: ${isConfigured}`);
+          console.log(`📧 Kerio Config: Host=${kerioConnector.KERIO_CONFIG?.host || 'N/A'}, User=${kerioConnector.KERIO_CONFIG?.username || 'N/A'}`);
+
+          if (!isConfigured) {
+            throw new Error('Kerio Connect not configured. Set KERIO_HOST, KERIO_USERNAME, KERIO_PASSWORD environment variables');
+          }
+
           switch(toolName) {
             case 'kerio_list_emails':
+              console.log(`📧 Calling listEmails with args:`, JSON.stringify(toolArgs));
               toolResult = await kerioConnector.listEmails(toolArgs);
+              console.log(`📧 listEmails completed successfully`);
               break;
             case 'kerio_read_email':
               toolResult = await kerioConnector.readEmail(toolArgs);
