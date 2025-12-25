@@ -78,8 +78,15 @@ async function listEmails(params) {
 
     function checkComplete() {
       if (fetchEnded && pendingParsers === 0) {
-        console.log(`📧 All ${emails.length} emails parsed, closing connection`);
-        imap.end();
+        console.log(`📧 All ${emails.length} emails parsed, resolving and closing connection`);
+        clearTimeout(timeout);
+        // Resolve immediately, don't wait for imap.end event
+        resolve({
+          emails: emails.reverse(),
+          total: emails.length,
+          folder: folder
+        });
+        try { imap.end(); } catch(e) {}
       }
     }
 
@@ -151,12 +158,8 @@ async function listEmails(params) {
     });
 
     imap.once('end', () => {
-      console.log(`📧 Connection closed, returning ${emails.length} emails`);
-      resolve({
-        emails: emails.reverse(),
-        total: emails.length,
-        folder: folder
-      });
+      console.log(`📧 IMAP connection closed`);
+      // Don't resolve here - already resolved in checkComplete
     });
 
     // Connection timeout
