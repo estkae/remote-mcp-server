@@ -73,6 +73,15 @@ async function listEmails(params) {
       return reject(new Error(`Failed to create IMAP connection: ${err.message}`));
     }
     const emails = [];
+    let pendingParsers = 0;
+    let fetchEnded = false;
+
+    function checkComplete() {
+      if (fetchEnded && pendingParsers === 0) {
+        console.log(`📧 All ${emails.length} emails parsed, closing connection`);
+        imap.end();
+      }
+    }
 
     imap.once('ready', () => {
       imap.openBox(folder, true, (err, box) => {
@@ -95,6 +104,8 @@ async function listEmails(params) {
           }
 
           const fetchResults = results.slice(-limit);
+          console.log(`📧 Fetching ${fetchResults.length} emails from ${folder}`);
+
           const fetch = imap.fetch(fetchResults, {
             bodies: 'HEADER.FIELDS (FROM TO SUBJECT DATE)',
             struct: true
@@ -102,6 +113,7 @@ async function listEmails(params) {
 
           fetch.on('message', (msg, seqno) => {
             let email = { id: seqno };
+            pendingParsers++;
 
             msg.on('body', (stream, info) => {
               simpleParser(stream, (err, parsed) => {
@@ -111,16 +123,23 @@ async function listEmails(params) {
                   email.subject = parsed.subject || '';
                   email.date = parsed.date || '';
                 }
+                emails.push(email);
+                pendingParsers--;
+                checkComplete();
               });
-            });
-
-            msg.once('end', () => {
-              emails.push(email);
             });
           });
 
-          fetch.once('end', () => {
+          fetch.once('error', (err) => {
+            console.error(`📧 Fetch error: ${err.message}`);
             imap.end();
+            reject(err);
+          });
+
+          fetch.once('end', () => {
+            console.log(`📧 Fetch completed, waiting for parsers...`);
+            fetchEnded = true;
+            checkComplete();
           });
         });
       });
@@ -132,6 +151,7 @@ async function listEmails(params) {
     });
 
     imap.once('end', () => {
+      console.log(`📧 Connection closed, returning ${emails.length} emails`);
       resolve({
         emails: emails.reverse(),
         total: emails.length,
@@ -141,6 +161,7 @@ async function listEmails(params) {
 
     // Connection timeout
     const timeout = setTimeout(() => {
+      console.error(`📧 Connection timeout after 30 seconds`);
       try { imap.end(); } catch (e) {}
       reject(new Error('IMAP connection timeout after 30 seconds'));
     }, 30000);
