@@ -33,13 +33,22 @@ function getImapConnection() {
     throw new Error('Kerio Connect not configured. Set KERIO_HOST, KERIO_USERNAME, KERIO_PASSWORD');
   }
 
+  console.log(`📧 Creating IMAP connection to ${KERIO_CONFIG.host}:${KERIO_CONFIG.imapPort}`);
+
   return new Imap({
     user: KERIO_CONFIG.username,
     password: KERIO_CONFIG.password,
     host: KERIO_CONFIG.host,
     port: KERIO_CONFIG.imapPort,
     tls: KERIO_CONFIG.useSsl,
-    tlsOptions: { rejectUnauthorized: false }
+    tlsOptions: {
+      rejectUnauthorized: false,
+      servername: KERIO_CONFIG.host
+    },
+    authTimeout: 30000,
+    connTimeout: 30000,
+    keepalive: false,
+    debug: (msg) => console.log(`📧 IMAP Debug: ${msg}`)
   });
 }
 
