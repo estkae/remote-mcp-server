@@ -49,8 +49,20 @@ function getImapConnection() {
 async function listEmails(params) {
   const { folder = 'INBOX', limit = 20, unreadOnly = false } = params;
 
+  // Debug: Log configuration (ohne Passwort)
+  console.log(`📧 Kerio listEmails - Host: ${KERIO_CONFIG.host}, User: ${KERIO_CONFIG.username}, Port: ${KERIO_CONFIG.imapPort}`);
+
+  if (!isKerioConfigured()) {
+    throw new Error('Kerio Connect not configured. Missing KERIO_HOST, KERIO_USERNAME or KERIO_PASSWORD');
+  }
+
   return new Promise((resolve, reject) => {
-    const imap = getImapConnection();
+    let imap;
+    try {
+      imap = getImapConnection();
+    } catch (err) {
+      return reject(new Error(`Failed to create IMAP connection: ${err.message}`));
+    }
     const emails = [];
 
     imap.once('ready', () => {
@@ -106,7 +118,8 @@ async function listEmails(params) {
     });
 
     imap.once('error', (err) => {
-      reject(err);
+      console.error(`📧 Kerio IMAP Error: ${err.message}`);
+      reject(new Error(`IMAP connection failed: ${err.message}`));
     });
 
     imap.once('end', () => {
@@ -117,7 +130,20 @@ async function listEmails(params) {
       });
     });
 
-    imap.connect();
+    // Connection timeout
+    const timeout = setTimeout(() => {
+      try { imap.end(); } catch (e) {}
+      reject(new Error('IMAP connection timeout after 30 seconds'));
+    }, 30000);
+
+    imap.once('ready', () => clearTimeout(timeout));
+
+    try {
+      imap.connect();
+    } catch (err) {
+      clearTimeout(timeout);
+      reject(new Error(`Failed to connect to IMAP: ${err.message}`));
+    }
   });
 }
 
