@@ -1,0 +1,54 @@
+Fix: Gesendete E-Mails werden jetzt automatisch im Gesendet-Ordner gespeichert
+
+## Problem
+- Gesendete E-Mails wurden über SMTP versendet, aber nicht im "Gesendet"-Ordner gespeichert
+- Kein Sendedatum wurde explizit gesetzt
+- Keine Möglichkeit, verfügbare IMAP-Ordner zu listen
+
+## Lösung
+1. **Automatisches Speichern nach SMTP-Versand**
+   - Neue Funktion `saveToSentFolder()` speichert Mail via IMAP
+   - Mail wird im RFC 2822 Format erstellt mit `buildRFC2822Message()`
+   - Unterstützt Text, HTML und Multipart
+
+2. **Intelligente Ordner-Erkennung**
+   - Probiert automatisch: Sent, Gesendet, Sent Items, Sent Mail
+   - Neue Funktion `tryAlternativeFolders()` für Fallback-Logik
+
+3. **Korrektes Sendedatum**
+   - Date-Header wird explizit im RFC 2822 Format gesetzt
+   - Verwendet aktuelle Zeit bei Mail-Versand
+
+4. **Neue Hilfsfunktion**
+   - `listFolders()` listet alle verfügbaren IMAP-Ordner
+   - Neues MCP-Tool `kerio_list_folders`
+
+## Änderungen
+- `kerio-connector.js`:
+  - sendEmail() erweitert (Zeile 249-305)
+  - saveToSentFolder() hinzugefügt (Zeile 310-346)
+  - tryAlternativeFolders() hinzugefügt (Zeile 351-378)
+  - buildRFC2822Message() hinzugefügt (Zeile 383-422)
+  - listFolders() hinzugefügt (Zeile 427-470)
+  - KERIO_TOOLS erweitert um neue Parameter und Tool
+
+## Neue Features
+- `saveCopyToSent` Parameter (default: true)
+- `sentFolder` Parameter (default: "Sent")
+- `kerio_list_folders` MCP Tool
+
+## Testing
+- Test-Script: `test-kerio-sent-folder.js`
+- Testing Guide: `TESTING-GUIDE.md`
+- Dokumentation: `KERIO-SENT-FOLDER-FIX.md`
+
+## Backward Compatibility
+✅ Vollständig rückwärtskompatibel
+- Bestehendes Verhalten bleibt gleich (speichert jetzt zusätzlich)
+- Neue Parameter sind optional mit sinnvollen Defaults
+- Fehler beim Speichern stoppen Mail-Versand nicht
+
+## Run Tests
+```bash
+node test-kerio-sent-folder.js
+```

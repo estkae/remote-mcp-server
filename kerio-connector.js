@@ -244,14 +244,14 @@ async function readEmail(params) {
 }
 
 /**
- * Send email via SMTP
+ * Send email via SMTP and save to Sent folder
  */
 async function sendEmail(params) {
   if (!isKerioConfigured()) {
     throw new Error('Kerio Connect not configured');
   }
 
-  const { to, subject, text, html, cc, bcc } = params;
+  const { to, subject, text, html, cc, bcc, saveCopyToSent = true, sentFolder = 'Sent' } = params;
 
   const transporter = nodemailer.createTransport({
     host: KERIO_CONFIG.host,
@@ -263,6 +263,9 @@ async function sendEmail(params) {
     }
   });
 
+  // Aktuelles Datum im korrekten RFC 2822 Format
+  const now = new Date();
+
   const mailOptions = {
     from: KERIO_CONFIG.username,
     to,
@@ -270,19 +273,200 @@ async function sendEmail(params) {
     text,
     html,
     cc,
-    bcc
+    bcc,
+    date: now  // Explizites Sendedatum setzen
   };
 
   try {
+    // 1. Email über SMTP versenden
     const info = await transporter.sendMail(mailOptions);
+    console.log(`📧 Email sent via SMTP, MessageID: ${info.messageId}`);
+
+    // 2. Kopie im "Gesendet"-Ordner speichern (wenn gewünscht)
+    if (saveCopyToSent) {
+      try {
+        await saveToSentFolder(mailOptions, sentFolder);
+        console.log(`📧 Email copy saved to ${sentFolder} folder`);
+      } catch (sentError) {
+        console.error(`⚠️  Failed to save to sent folder: ${sentError.message}`);
+        // Fehler loggen, aber nicht werfen - Mail wurde ja versendet
+      }
+    }
+
     return {
       success: true,
       messageId: info.messageId,
-      message: `Email sent successfully to ${to}`
+      message: `Email sent successfully to ${to}`,
+      savedToSent: saveCopyToSent
     };
   } catch (error) {
     throw new Error(`Failed to send email: ${error.message}`);
   }
+}
+
+/**
+ * Save email copy to Sent folder via IMAP
+ */
+async function saveToSentFolder(mailOptions, sentFolder) {
+  return new Promise((resolve, reject) => {
+    const imap = getImapConnection();
+
+    // Erstelle RFC 2822 Mail-Nachricht
+    const mailMessage = buildRFC2822Message(mailOptions);
+
+    imap.once('ready', () => {
+      // Öffne Sent-Ordner im Schreibmodus
+      imap.openBox(sentFolder, false, (err, box) => {
+        if (err) {
+          // Versuche alternative Ordnernamen
+          const alternativeFolders = ['Gesendet', 'Sent Items', 'Sent Mail'];
+          tryAlternativeFolders(imap, alternativeFolders, mailMessage, resolve, reject);
+          return;
+        }
+
+        // Füge Mail zum Sent-Ordner hinzu
+        imap.append(mailMessage, { mailbox: sentFolder, flags: ['\\Seen'] }, (appendErr) => {
+          imap.end();
+
+          if (appendErr) {
+            return reject(new Error(`Failed to append to ${sentFolder}: ${appendErr.message}`));
+          }
+
+          resolve();
+        });
+      });
+    });
+
+    imap.once('error', (err) => {
+      reject(new Error(`IMAP error while saving to sent: ${err.message}`));
+    });
+
+    imap.connect();
+  });
+}
+
+/**
+ * Try alternative folder names if default fails
+ */
+function tryAlternativeFolders(imap, folders, mailMessage, resolve, reject) {
+  if (folders.length === 0) {
+    imap.end();
+    return reject(new Error('Could not find Sent folder. Try: Sent, Gesendet, or Sent Items'));
+  }
+
+  const folder = folders.shift();
+
+  imap.openBox(folder, false, (err, box) => {
+    if (err) {
+      // Versuche nächsten Ordner
+      tryAlternativeFolders(imap, folders, mailMessage, resolve, reject);
+      return;
+    }
+
+    console.log(`✅ Found sent folder: ${folder}`);
+
+    imap.append(mailMessage, { mailbox: folder, flags: ['\\Seen'] }, (appendErr) => {
+      imap.end();
+
+      if (appendErr) {
+        return reject(new Error(`Failed to append to ${folder}: ${appendErr.message}`));
+      }
+
+      resolve();
+    });
+  });
+}
+
+/**
+ * Build RFC 2822 compliant email message
+ */
+function buildRFC2822Message(mailOptions) {
+  const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const now = mailOptions.date || new Date();
+
+  // RFC 2822 Date Format
+  const dateStr = now.toUTCString();
+
+  let message = '';
+  message += `From: ${mailOptions.from}\r\n`;
+  message += `To: ${mailOptions.to}\r\n`;
+  if (mailOptions.cc) message += `Cc: ${mailOptions.cc}\r\n`;
+  message += `Subject: ${mailOptions.subject}\r\n`;
+  message += `Date: ${dateStr}\r\n`;
+  message += `MIME-Version: 1.0\r\n`;
+
+  if (mailOptions.html) {
+    message += `Content-Type: multipart/alternative; boundary="${boundary}"\r\n\r\n`;
+
+    // Plain text part
+    if (mailOptions.text) {
+      message += `--${boundary}\r\n`;
+      message += `Content-Type: text/plain; charset="UTF-8"\r\n`;
+      message += `Content-Transfer-Encoding: 7bit\r\n\r\n`;
+      message += `${mailOptions.text}\r\n\r\n`;
+    }
+
+    // HTML part
+    message += `--${boundary}\r\n`;
+    message += `Content-Type: text/html; charset="UTF-8"\r\n`;
+    message += `Content-Transfer-Encoding: 7bit\r\n\r\n`;
+    message += `${mailOptions.html}\r\n\r\n`;
+    message += `--${boundary}--\r\n`;
+  } else {
+    message += `Content-Type: text/plain; charset="UTF-8"\r\n`;
+    message += `Content-Transfer-Encoding: 7bit\r\n\r\n`;
+    message += `${mailOptions.text || ''}\r\n`;
+  }
+
+  return message;
+}
+
+/**
+ * List all available IMAP folders
+ */
+async function listFolders() {
+  if (!isKerioConfigured()) {
+    throw new Error('Kerio Connect not configured');
+  }
+
+  return new Promise((resolve, reject) => {
+    const imap = getImapConnection();
+
+    imap.once('ready', () => {
+      imap.getBoxes((err, boxes) => {
+        imap.end();
+
+        if (err) {
+          return reject(err);
+        }
+
+        // Flatten folder structure
+        const folders = [];
+        function extractFolders(boxesObj, prefix = '') {
+          for (const [name, info] of Object.entries(boxesObj)) {
+            const fullName = prefix ? `${prefix}${info.delimiter}${name}` : name;
+            folders.push({
+              name: fullName,
+              delimiter: info.delimiter,
+              hasChildren: info.children !== null
+            });
+            if (info.children) {
+              extractFolders(info.children, fullName);
+            }
+          }
+        }
+        extractFolders(boxes);
+
+        resolve({ folders });
+      });
+    });
+
+    imap.once('error', (err) => {
+      reject(err);
+    });
+
+    imap.connect();
+  });
 }
 
 /**
@@ -415,7 +599,7 @@ const KERIO_TOOLS = [
   },
   {
     name: "kerio_send_email",
-    description: "✉️ Sende Email via Kerio Connect SMTP",
+    description: "✉️ Sende Email via Kerio Connect SMTP und speichere Kopie im Gesendet-Ordner",
     input_schema: {
       type: "object",
       properties: {
@@ -442,6 +626,16 @@ const KERIO_TOOLS = [
         bcc: {
           type: "string",
           description: "BCC recipients (optional)"
+        },
+        saveCopyToSent: {
+          type: "boolean",
+          description: "Save copy to Sent folder (default: true)",
+          default: true
+        },
+        sentFolder: {
+          type: "string",
+          description: "Name of sent folder (default: 'Sent', tries 'Gesendet', 'Sent Items' automatically)",
+          default: "Sent"
         }
       },
       required: ["to", "subject"]
@@ -470,6 +664,14 @@ const KERIO_TOOLS = [
       },
       required: ["query"]
     }
+  },
+  {
+    name: "kerio_list_folders",
+    description: "📁 Liste alle verfügbaren IMAP-Ordner (INBOX, Sent, Gesendet, etc.)",
+    input_schema: {
+      type: "object",
+      properties: {}
+    }
   }
 ];
 
@@ -480,5 +682,6 @@ module.exports = {
   listEmails,
   readEmail,
   sendEmail,
-  searchEmails
+  searchEmails,
+  listFolders
 };
