@@ -461,6 +461,9 @@ app.post('/execute', async (req, res) => {
         case 'kerio_search_emails':
           result = await kerioConnector.searchEmails(parameters);
           break;
+        case 'kerio_list_folders':
+          result = await kerioConnector.listFolders();
+          break;
         default:
           throw new Error('Unknown Kerio tool: ' + tool);
       }
@@ -805,6 +808,9 @@ app.post('/mcp', async (req, res) => {
               break;
             case 'kerio_search_emails':
               toolResult = await kerioConnector.searchEmails(toolArgs);
+              break;
+            case 'kerio_list_folders':
+              toolResult = await kerioConnector.listFolders();
               break;
             default:
               throw new Error('Unknown Kerio tool: ' + toolName);
