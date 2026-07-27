@@ -185,15 +185,29 @@ async function listEmails(params) {
  */
 async function readEmail(params) {
   const { emailId, folder = 'INBOX' } = params;
+  // Ohne Timeout konnte diese Funktion ewig offen bleiben (IMAP-Verbindung leckt,
+  // Aufrufer sieht nur den 504 des Gateways). Jetzt: hart begrenzt und aufgeraeumt.
+  const timeoutMs = parseInt(params?.timeoutMs) || parseInt(process.env.KERIO_READ_TIMEOUT_MS) || 45000;
 
   return new Promise((resolve, reject) => {
     const imap = getImapConnection();
+    let settled = false;
+    let parsing = false;
+    const finish = (fn, arg) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      try { imap.end(); } catch (e) {}
+      fn(arg);
+    };
+    const timer = setTimeout(() => {
+      finish(reject, new Error(`readEmail timeout nach ${timeoutMs}ms (emailId=${emailId}, folder=${folder})`));
+    }, timeoutMs);
 
     imap.once('ready', () => {
       imap.openBox(folder, true, (err, box) => {
         if (err) {
-          imap.end();
-          return reject(err);
+          return finish(reject, err);
         }
 
         const fetch = imap.fetch([emailId], {
@@ -203,14 +217,14 @@ async function readEmail(params) {
 
         fetch.on('message', (msg, seqno) => {
           msg.on('body', (stream, info) => {
+            parsing = true;
             simpleParser(stream, (err, parsed) => {
-              imap.end();
-
               if (err) {
-                return reject(err);
+                return finish(reject, err);
               }
 
-              resolve({
+              finish(resolve, {
+                messageId: parsed.messageId || '',
                 from: parsed.from?.text || '',
                 to: parsed.to?.text || '',
                 cc: parsed.cc?.text || '',
@@ -218,7 +232,8 @@ async function readEmail(params) {
                 date: parsed.date || '',
                 text: parsed.text || '',
                 html: parsed.html || '',
-                attachments: parsed.attachments?.map(a => ({
+                attachments: parsed.attachments?.map((a, i) => ({
+                  index: i,
                   filename: a.filename,
                   contentType: a.contentType,
                   size: a.size
@@ -229,14 +244,129 @@ async function readEmail(params) {
         });
 
         fetch.once('error', (err) => {
-          imap.end();
-          reject(err);
+          finish(reject, err);
+        });
+
+        // Kam gar kein Body (falsche emailId, leeres Fetch-Ergebnis), haengt der
+        // Aufruf sonst bis zum Timeout -> hier sofort mit klarer Meldung raus.
+        fetch.once('end', () => {
+          if (!parsing) {
+            finish(reject, new Error(`Keine Mail mit emailId=${emailId} in ${folder} gefunden`));
+          }
         });
       });
     });
 
     imap.once('error', (err) => {
-      reject(err);
+      finish(reject, err);
+    });
+
+    imap.connect();
+  });
+}
+
+/**
+ * Fetch ONE attachment INCLUDING its content (base64).
+ *
+ * kerio_read_email liefert bewusst nur Anhang-Metadaten. Der Inhalt wird hier
+ * separat geholt, weil ihn u.a. der SLS-Security-Leadserver zum Virenscan
+ * (ClamAV) braucht. Zwei Schutzvorkehrungen, weil das echte Postfachdaten sind:
+ *   - Groessenlimit (maxBytes, Default KERIO_MAX_ATTACHMENT_BYTES bzw. 8 MB):
+ *     zu grosse Anhaenge kommen als Metadaten OHNE Inhalt zurueck.
+ *   - Token-Gate im Server-Routing (x-mcp-bus-token), damit der Inhalt nicht
+ *     ueber den offenen /execute-Endpoint abfliesst.
+ * Auswahl per filename (bevorzugt) oder index.
+ */
+const DEFAULT_MAX_ATTACHMENT_BYTES = parseInt(process.env.KERIO_MAX_ATTACHMENT_BYTES) || 8 * 1024 * 1024;
+
+async function fetchAttachment(params) {
+  const { emailId, folder = 'INBOX', filename = null, index = 0 } = params || {};
+  const maxBytes = Math.min(
+    parseInt(params?.maxBytes) || DEFAULT_MAX_ATTACHMENT_BYTES,
+    DEFAULT_MAX_ATTACHMENT_BYTES
+  );
+
+  if (!isKerioConfigured()) {
+    throw new Error('Kerio Connect not configured');
+  }
+  if (emailId === undefined || emailId === null) {
+    throw new Error('emailId is required');
+  }
+
+  return new Promise((resolve, reject) => {
+    const imap = getImapConnection();
+    let settled = false;
+    const done = (fn, arg) => { if (!settled) { settled = true; fn(arg); } };
+
+    const timeout = setTimeout(() => {
+      try { imap.end(); } catch (e) {}
+      done(reject, new Error('IMAP connection timeout after 30 seconds'));
+    }, 30000);
+
+    imap.once('ready', () => {
+      imap.openBox(folder, true, (err) => {
+        if (err) {
+          clearTimeout(timeout);
+          imap.end();
+          return done(reject, err);
+        }
+
+        const fetch = imap.fetch([emailId], { bodies: '', struct: true });
+
+        fetch.on('message', (msg) => {
+          msg.on('body', (stream) => {
+            simpleParser(stream, (err, parsed) => {
+              clearTimeout(timeout);
+              imap.end();
+
+              if (err) {
+                return done(reject, err);
+              }
+
+              const list = parsed.attachments || [];
+              const att = filename
+                ? list.find(a => a.filename === filename)
+                : list[index];
+
+              if (!att) {
+                return done(reject, new Error(
+                  `Attachment not found (filename=${filename}, index=${index}, available=${list.length})`
+                ));
+              }
+
+              const size = att.size ?? att.content?.length ?? 0;
+              if (size > maxBytes) {
+                return done(resolve, {
+                  filename: att.filename,
+                  contentType: att.contentType,
+                  size,
+                  skipped: true,
+                  reason: `Attachment groesser als Limit (${size} > ${maxBytes} Bytes)`
+                });
+              }
+
+              done(resolve, {
+                filename: att.filename,
+                contentType: att.contentType,
+                size,
+                skipped: false,
+                contentBase64: Buffer.from(att.content).toString('base64')
+              });
+            });
+          });
+        });
+
+        fetch.once('error', (err) => {
+          clearTimeout(timeout);
+          imap.end();
+          done(reject, err);
+        });
+      });
+    });
+
+    imap.once('error', (err) => {
+      clearTimeout(timeout);
+      done(reject, err);
     });
 
     imap.connect();
@@ -675,6 +805,38 @@ const KERIO_TOOLS = [
     }
   },
   {
+    name: "kerio_fetch_attachment",
+    description: "📎 Hole EINEN Anhang inklusive Inhalt (base64) — z.B. für Virenscan. Token-geschützt, Größenlimit.",
+    input_schema: {
+      type: "object",
+      properties: {
+        emailId: {
+          type: "number",
+          description: "Email ID from list_emails"
+        },
+        folder: {
+          type: "string",
+          description: "Mailbox folder (default: INBOX)",
+          default: "INBOX"
+        },
+        filename: {
+          type: "string",
+          description: "Dateiname des Anhangs (bevorzugt gegenüber index)"
+        },
+        index: {
+          type: "number",
+          description: "Index des Anhangs, falls kein filename angegeben (default: 0)",
+          default: 0
+        },
+        maxBytes: {
+          type: "number",
+          description: "Obergrenze für den Inhalt; größere Anhänge kommen ohne Inhalt zurück (skipped: true)"
+        }
+      },
+      required: ["emailId"]
+    }
+  },
+  {
     name: "kerio_send_email",
     description: "✉️ Sende Email via Kerio Connect SMTP und speichere Kopie im Gesendet-Ordner",
     input_schema: {
@@ -824,6 +986,7 @@ module.exports = {
   isKerioConfigured,
   listEmails,
   readEmail,
+  fetchAttachment,
   sendEmail,
   sendEmailWithAttachment,
   searchEmails,

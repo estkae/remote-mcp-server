@@ -516,12 +516,37 @@ app.post('/execute', async (req, res) => {
         throw new Error('Kerio Connect not configured. Set KERIO_HOST, KERIO_USERNAME, KERIO_PASSWORD');
       }
 
+      // Postfach-Zugriff hinter Token: /execute ist oeffentlich erreichbar, die
+      // kerio_*-Tools lesen und versenden echte Mail. Ausrollreihenfolge ohne
+      // Bruch: erst diesen Code deployen (MCP_BUS_TOKEN noch nicht gesetzt ->
+      // Grace-Mode mit Warnung), dann die Aufrufer auf den Header umstellen,
+      // dann MCP_BUS_TOKEN setzen -> ab da erzwungen.
+      const busToken = process.env.MCP_BUS_TOKEN;
+      const providedToken = req.headers['x-mcp-bus-token']
+        || (req.headers['authorization'] || '').replace(/^Bearer\s+/i, '');
+      if (busToken) {
+        if (providedToken !== busToken) {
+          console.warn(`🚫 ${tool} ohne gueltiges Token abgelehnt`);
+          return res.status(401).json({ error: `${tool}: ungueltiges oder fehlendes Token (x-mcp-bus-token)` });
+        }
+      } else if (tool !== 'kerio_fetch_attachment') {
+        console.warn(`⚠️  ${tool} ohne Token-Schutz ausgefuehrt - MCP_BUS_TOKEN ist nicht gesetzt`);
+      }
+
       switch(tool) {
         case 'kerio_list_emails':
           result = await kerioConnector.listEmails(parameters || {});
           break;
         case 'kerio_read_email':
           result = await kerioConnector.readEmail(parameters);
+          break;
+        case 'kerio_fetch_attachment':
+          // Anhang-INHALT verlaesst hier den Mailserver -> IMMER Token, kein
+          // Grace-Mode (fail closed, siehe Token-Pruefung oben).
+          if (!busToken) {
+            throw new Error('kerio_fetch_attachment ist deaktiviert (MCP_BUS_TOKEN nicht gesetzt)');
+          }
+          result = await kerioConnector.fetchAttachment(parameters);
           break;
         case 'kerio_send_email':
           result = await kerioConnector.sendEmail(parameters);
@@ -1031,6 +1056,10 @@ async function executeMcpTool(toolName, toolArgs = {}) {
       case 'kerio_send_email_with_attachment': return await kerioConnector.sendEmailWithAttachment(toolArgs);
       case 'kerio_search_emails': return await kerioConnector.searchEmails(toolArgs);
       case 'kerio_list_folders': return await kerioConnector.listFolders();
+      case 'kerio_fetch_attachment':
+        // Bewusst NICHT über den MCP-Pfad: Anhang-Inhalte gibt es nur über
+        // POST /execute mit x-mcp-bus-token (dort sitzt das Token-Gate).
+        throw new Error('kerio_fetch_attachment nur über POST /execute mit x-mcp-bus-token verfuegbar');
       default: throw new Error('Unknown Kerio tool: ' + toolName);
     }
   }
