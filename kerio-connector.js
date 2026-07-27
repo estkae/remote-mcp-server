@@ -119,8 +119,16 @@ async function listEmails(params) {
           });
 
           fetch.on('message', (msg, seqno) => {
-            let email = { id: seqno };
+            // WICHTIG: node-imap fetch() ist UID-basiert, das seqno-Argument ist
+            // aber die Sequenznummer. Wer die als 'id' zurueckbekam und damit
+            // read_email aufrief, traf eine andere oder gar keine Mail (frueher
+            // ein Haenger). Deshalb: id = UID aus den Attributen.
+            let email = { id: seqno, seqno };
             pendingParsers++;
+
+            msg.once('attributes', (attrs) => {
+              if (attrs?.uid) email.id = attrs.uid;
+            });
 
             msg.on('body', (stream, info) => {
               simpleParser(stream, (err, parsed) => {
@@ -717,7 +725,12 @@ async function searchEmails(params) {
           });
 
           fetch.on('message', (msg, seqno) => {
-            let email = { id: seqno };
+            // id = UID (siehe Kommentar in listEmails), nicht die Sequenznummer.
+            let email = { id: seqno, seqno };
+
+            msg.once('attributes', (attrs) => {
+              if (attrs?.uid) email.id = attrs.uid;
+            });
 
             msg.on('body', (stream, info) => {
               simpleParser(stream, (err, parsed) => {
