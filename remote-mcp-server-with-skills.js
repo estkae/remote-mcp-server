@@ -1097,7 +1097,13 @@ async function setupMcpStreamable(app) {
       return server;
     };
 
-    app.post('/mcp', async (req, res) => {
+    // Capability-URL statt Bearer: die Connectors-UI kann keine Header setzen, also
+    // liegt der MCP-Endpoint hinter einem geheimen Pfadsegment (gleiches Muster wie
+    // sls.locara.ch). MCP_PATH_SECRET nicht gesetzt = Verhalten wie bisher (/mcp offen).
+    const mcpSecret = (process.env.MCP_PATH_SECRET || '').replace(/^\/+|\/+$/g, '');
+    const mcpPath = mcpSecret ? `/${mcpSecret}/mcp` : '/mcp';
+
+    app.post(mcpPath, async (req, res) => {
       try {
         const sid = req.headers['mcp-session-id'];
         let transport;
@@ -1130,9 +1136,13 @@ async function setupMcpStreamable(app) {
       }
       res.status(400).send('Ungültige oder fehlende Session-ID');
     };
-    app.get('/mcp', mcpSession);
-    app.delete('/mcp', mcpSession);
-    console.log('✅ MCP Streamable HTTP (/mcp) aktiv (offizielles SDK)');
+    app.get(mcpPath, mcpSession);
+    app.delete(mcpPath, mcpSession);
+    if (mcpSecret) {
+      // Blanker Pfad existiert nicht mehr -> 404, kein Hinweis auf den echten.
+      app.all('/mcp', (req, res) => res.status(404).json({ error: 'not found' }));
+    }
+    console.log(`✅ MCP Streamable HTTP aktiv (offizielles SDK), Pfad: ${mcpSecret ? '/<geheim>/mcp' : '/mcp (OFFEN - MCP_PATH_SECRET nicht gesetzt)'}`);
   } catch (e) {
     console.error('❌ MCP Streamable HTTP Setup fehlgeschlagen (Rest des Bus läuft weiter):', e && e.message || e);
   }
