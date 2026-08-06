@@ -1085,12 +1085,18 @@ async function setupMcpStreamable(app) {
     const { ListToolsRequestSchema, CallToolRequestSchema, isInitializeRequest } = await import('@modelcontextprotocol/sdk/types.js');
     const { randomUUID } = require('crypto');
 
-    const buildMcpServer = () => {
+    const buildMcpServer = (herkunft = '?') => {
       const server = new Server({ name: 'mcp-bus', version: '2.1.0' }, { capabilities: { tools: {} } });
-      server.setRequestHandler(ListToolsRequestSchema, async () => ({
-        tools: buildToolList().map(t => ({ name: t.name, description: t.description, inputSchema: t.input_schema }))
-      }));
+      server.setRequestHandler(ListToolsRequestSchema, async () => {
+        console.log(`📋 MCP tools/list von ${herkunft}`);
+        return { tools: buildToolList().map(t => ({ name: t.name, description: t.description, inputSchema: t.input_schema })) };
+      });
       server.setRequestHandler(CallToolRequestSchema, async (reqMsg) => {
+        // Ueber /execute wurde jeder Aufruf protokolliert, ueber MCP bisher keiner
+        // — nach dem Vorfall vom 06.08.2026 war deshalb nicht feststellbar, ob
+        // ausser uns jemand den offenen Pfad benutzt hat. Ohne Spur keine Antwort
+        // auf die einzige Frage, die nach einem Fund zaehlt: hat es jemand getan?
+        console.log(`🔌 MCP Execute: ${reqMsg.params.name} von ${herkunft}`);
         const result = await executeMcpTool(reqMsg.params.name, reqMsg.params.arguments || {});
         return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
       });
@@ -1099,8 +1105,28 @@ async function setupMcpStreamable(app) {
 
     // Capability-URL statt Bearer: die Connectors-UI kann keine Header setzen, also
     // liegt der MCP-Endpoint hinter einem geheimen Pfadsegment (gleiches Muster wie
-    // sls.locara.ch). MCP_PATH_SECRET nicht gesetzt = Verhalten wie bisher (/mcp offen).
+    // sls.locara.ch).
+    //
+    // FAIL CLOSED (06.08.2026). Vorher galt "MCP_PATH_SECRET nicht gesetzt =
+    // /mcp offen" — und genau so lief es monatelang in Produktion: der Code war
+    // deployed, die Variable nie gesetzt. Nachgewiesen am 06.08.2026, indem ohne
+    // jede Authentifizierung ueber die oeffentliche URL eine Mail versendet wurde
+    // (kerio_send_email); ebenso erreichbar waren kerio_list_folders/list_emails/
+    // read_email/search_emails, also das gesamte Postfach.
+    //
+    // Ein Default, der im Zweifel oeffnet, ist der Fehler — nicht die vergessene
+    // Variable. Ohne MCP_PATH_SECRET wird der Endpunkt jetzt gar nicht erst
+    // eingehaengt. Wer das alte Verhalten braucht (lokale Entwicklung), setzt
+    // MCP_ALLOW_OPEN=1 und sagt damit ausdruecklich ja dazu.
     const mcpSecret = (process.env.MCP_PATH_SECRET || '').replace(/^\/+|\/+$/g, '');
+    const mcpAllowOpen = process.env.MCP_ALLOW_OPEN === '1';
+    if (!mcpSecret && !mcpAllowOpen) {
+      app.all('/mcp', (req, res) => res.status(404).json({ error: 'not found' }));
+      console.error('⛔ MCP-Endpoint NICHT eingehaengt: MCP_PATH_SECRET fehlt. ' +
+        'Die kerio_*-Tools waeren sonst ohne Authentifizierung erreichbar. ' +
+        'Secret setzen (empfohlen) oder MCP_ALLOW_OPEN=1 fuer lokale Entwicklung.');
+      return;
+    }
     const mcpPath = mcpSecret ? `/${mcpSecret}/mcp` : '/mcp';
 
     app.post(mcpPath, async (req, res) => {
@@ -1116,7 +1142,8 @@ async function setupMcpStreamable(app) {
             onsessioninitialized: (id) => { mcpTransports[id] = transport; }
           });
           transport.onclose = () => { if (transport.sessionId) delete mcpTransports[transport.sessionId]; };
-          await buildMcpServer().connect(transport);
+          const herkunft = `${req.headers['x-forwarded-for'] || req.ip || '?'} (${String(req.headers['user-agent'] || '?').slice(0, 60)})`;
+          await buildMcpServer(herkunft).connect(transport);
         } else {
           res.status(400).json({ jsonrpc: '2.0', error: { code: -32000, message: 'Bad Request: keine gültige Session-ID' }, id: null });
           return;
